@@ -12,13 +12,14 @@ namespace QarnotDsnHandler.Test
     using NUnit.Framework;
     using QarnotDsnHandler;
 
+#pragma warning disable CA1305, CA1303
+
     [TestFixture]
     public class GetDnsSrvTest : GetDnsSrv
     {
-        HttpClientHandler Handler = null;
-        static FakeLookClient fakeLookClient = new FakeLookClient();
+        private static ILookupClient lookClient = new LookupClient();
         public GetDnsSrvTest()
-                : base("https://uri", lookupClient:fakeLookClient)
+                : base("https://uri", lookupClient: lookClient)
         {
         }
 
@@ -85,11 +86,12 @@ namespace QarnotDsnHandler.Test
             Assert.AreEqual(GetUri(), "https://uri");
             DsnCurrentAddress = new Address(null);
             Assert.AreEqual(GetUri(), "https://uri");
-            DsnCurrentAddress = new Address(new ServiceHostEntry() {
+            DsnCurrentAddress = new Address(new ServiceHostEntry()
+            {
                 Port = 430,
                 Priority = 4,
                 Weight = 10,
-                HostName = "testSuccess"
+                HostName = "testSuccess",
             });
             Assert.AreEqual(GetUri(), "https://testSuccess");
         }

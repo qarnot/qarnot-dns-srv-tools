@@ -11,22 +11,22 @@ namespace QarnotDsnHandler.Test
     using DnsClient;
     using NUnit.Framework;
     using QarnotDsnHandler;
-    // using Moq;
-    using Telerik.JustMock;
+
+#pragma warning disable CA1305, CA1303, CA1054
 
     [TestFixture]
-    public class GetDnsSrvIntegrationTest
+    public class QarnotDsnHandlerTest
     {
-        HttpClientHandler Handler;
-        FakeLookClient Lookup;
-        GetDnsSrvTester DnsTester;
+        private const string TestUrl = "https://api.test.qarnot.com/";
 
-        const string testUrl = "https://api.test.qarnot.com/";
+        private ILookupClient Lookup;
+
+        private GetDnsSrvTester DnsTester;
 
         [SetUp]
         public void SetUp()
         {
-            Lookup = new FakeLookClient();
+            Lookup = new LookupClient();
 
             DnsTester = new GetDnsSrvTester(Lookup);
         }
@@ -34,26 +34,7 @@ namespace QarnotDsnHandler.Test
         [TearDown]
         public void TearDown()
         {
-            // HttpHandler?.Dispose();
         }
-
-        public class GetDnsSrvTester : GetDnsSrv
-        {
-            public IEnumerable<ServiceHostEntry> DnsList = null;
-
-            public int DnsCall = 0;
-
-            public GetDnsSrvTester(ILookupClient lookupClient, string uri = testUrl, int cacheTime = 5, Random rand = null)
-            : base(uri, cacheTime, rand, lookupClient)
-            {}
-
-            protected override async Task<IEnumerable<ServiceHostEntry>> ResolveDsnSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
-            {
-                DnsCall++;
-                return DnsList;
-            }
-        }
-
 
         [Test]
         public async Task TestBalanceApiServerUriWithNoListFindReturnTheOriginalUri()
@@ -61,7 +42,7 @@ namespace QarnotDsnHandler.Test
             DnsTester.DnsList = new List<ServiceHostEntry>();
             Uri uri = await DnsTester.BalanceApiServerUri();
 
-            Assert.AreEqual(testUrl, uri.ToString());
+            Assert.AreEqual(TestUrl, uri.ToString());
         }
 
         [Test]
@@ -69,7 +50,6 @@ namespace QarnotDsnHandler.Test
         {
             DnsTester.DnsList = new List<ServiceHostEntry>()
             {
-
                 new ServiceHostEntry()
                 {
                     Port = 430,
@@ -95,7 +75,7 @@ namespace QarnotDsnHandler.Test
             DnsTester.DnsList = new List<ServiceHostEntry>();
             Uri uri = await DnsTester.BalanceApiServerUri();
             Uri nextUri = await DnsTester.NextApiUri();
-            Assert.AreEqual(testUrl, uri.ToString());
+            Assert.AreEqual(TestUrl, uri.ToString());
         }
 
         [Test]
@@ -209,14 +189,18 @@ namespace QarnotDsnHandler.Test
             Uri uri = await DnsTester.BalanceApiServerUri();
             Assert.AreEqual(new Uri("https://" + dnsList[0].HostName), uri);
             var lTask = new List<Task>();
-            Func<Task> callNext = async () => { await DnsTester.NextApiUri(); };
+            Func<Task> callNext = async () =>
+            {
+                await DnsTester.NextApiUri();
+            };
             lTask.Add(callNext());
             lTask.Add(callNext());
             lTask.Add(callNext());
             lTask.Add(callNext());
             lTask.Add(callNext());
             lTask.Add(callNext());
-            callNext = async () => {
+            callNext = async () =>
+            {
                 await Task.Delay(100);
                 dnsList = new List<ServiceHostEntry>()
                 {
@@ -256,11 +240,29 @@ namespace QarnotDsnHandler.Test
         }
 
         [Test]
-        public async Task TestGetUri()
+        public void TestGetUri()
         {
             DnsTester.DnsList = new List<ServiceHostEntry>();
             Uri uri = DnsTester.GetUri();
-            Assert.AreEqual(testUrl, uri.ToString());
+            Assert.AreEqual(TestUrl, uri.ToString());
         }
-   }
+
+        internal class GetDnsSrvTester : GetDnsSrv
+        {
+            internal GetDnsSrvTester(ILookupClient lookupClient, string baseUrl = TestUrl, int cacheTime = 5, Random rand = null)
+            : base(baseUrl, cacheTime, rand, lookupClient)
+            {
+            }
+
+            internal IEnumerable<ServiceHostEntry> DnsList { get; set; } = null;
+
+            internal int DnsCall { get; set; } = 0;
+
+            protected override Task<IEnumerable<ServiceHostEntry>> ResolveDsnSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                DnsCall++;
+                return Task.FromResult(DnsList);
+            }
+        }
+    }
 }
