@@ -1,4 +1,4 @@
-namespace QarnotDsnHandler.Test
+namespace QarnotDnsHandler.Test
 {
     using System;
     using System.Collections.Generic;
@@ -10,7 +10,6 @@ namespace QarnotDsnHandler.Test
     using System.Threading.Tasks;
     using DnsClient;
     using NUnit.Framework;
-    using QarnotDsnHandler;
 
 #pragma warning disable CA1305, CA1303
 
@@ -82,11 +81,11 @@ namespace QarnotDsnHandler.Test
         [Test]
         public void VerifyGetUriReturn()
         {
-            DsnCurrentAddress = null;
+            DnsCurrentAddress = null;
             Assert.AreEqual(GetUri(), "https://uri");
-            DsnCurrentAddress = new Address(null);
+            DnsCurrentAddress = new Address(null);
             Assert.AreEqual(GetUri(), "https://uri");
-            DsnCurrentAddress = new Address(new ServiceHostEntry()
+            DnsCurrentAddress = new Address(new ServiceHostEntry()
             {
                 Port = 430,
                 Priority = 4,

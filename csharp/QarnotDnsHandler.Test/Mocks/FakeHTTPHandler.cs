@@ -1,4 +1,4 @@
-namespace QarnotDsnHandler.Test
+namespace QarnotDnsHandler.Test
 {
     using System.Collections.Generic;
     using System.Net;

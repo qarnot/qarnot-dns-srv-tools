@@ -1,36 +1,36 @@
-namespace QarnotDsnHandler
+namespace QarnotDnsHandler
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net.Http;
     using System.Text.RegularExpressions;
-    using System.Net.Http.Headers;
     using System.Threading;
     using System.Threading.Tasks;
     using DnsClient;
 
+#pragma warning disable SA1623, SA1202, SA1201, CA1056, CA1062, CA1822, CA1054
+
     /// <summary>
-    /// check and get an srv uri given by the quarnot dns srv address
-    /// or return the given address
+    /// Check and get an srv uri given by the qarnot dns srv address
+    /// or return the given address.
     /// </summary>
-    public class GetDnsSrv: IGetUri
+    public class GetDnsSrv : IGetDnsSrv
     {
         /// <summary>
-        /// Random object create in the constructor
+        /// Random object create in the constructor.
         /// </summary>
         protected Random Rand { get; }
 
         /// <summary>
-        /// Date when to check the value
+        /// Date when to check the value.
         /// </summary>
-        /// <value>DateTime value</value>
+        /// <value>DateTime value.</value>
         protected DateTime NextTimeCheck { get; set; }
 
         /// <summary>
         /// Time, in minutes, of the connection cache before changing it.
         /// </summary>
-        /// <value>Time in minutes</value>
+        /// <value>Time in minutes.</value>
         protected int CacheTimeInMinute { get; }
 
         /// <summary>
@@ -40,95 +40,98 @@ namespace QarnotDsnHandler
         protected string ApiUri { get; }
 
         /// <summary>
-        /// Qarnot Tcp url
+        /// Qarnot Tcp url.
         /// </summary>
-        /// <value></value>
+        /// <value>The tcp uri create withe the qarnot api uri. </value>
         protected string DnsTcpUrl { get; }
 
         /// <summary>
-        /// A valid qarnot DnsSrv find
+        /// A valid qarnot DnsSrv find.
         /// </summary>
-        /// <value></value>
+        /// <value>Is Api uri good and the dns call return a value.</value>
         public bool DnsSrvFind { get; private set; }
 
         /// <summary>
         /// Safe Lock if the GetDnsSrv is used conncurency.
         /// </summary>
-        /// <value></value>
+        /// <value>SafeLock for do not multicall the dns.</value>
         protected bool ConcurrencySafeLock { get; set; }
 
         /// <summary>
-        /// Dsn List find
+        /// Dns List find.
         /// </summary>
-        protected List<Address> DsnList;
+        private List<Address> DnsList { get; set; }
 
         /// <summary>
-        /// Dns current valid Address used
+        /// Dns current valid Address used.
         /// </summary>
-        protected Address DsnCurrentAddress;
+        protected Address DnsCurrentAddress { get; set; }
 
         /// <summary>
-        /// The dns library
+        /// The dns library.
         /// </summary>
-        /// <returns></returns>
-        protected ILookupClient DnsSrvClient;
+        protected ILookupClient DnsSrvClient { get; set; }
 
         /// <summary>
-        /// Addresses find by the dns
+        /// Addresses find by the dns.
         /// </summary>
         protected class Address
         {
             /// <summary>
-            /// quarantain time in seconds
+            /// quarantain time in seconds.
             /// </summary>
-            private const int failTimeInSeconds = 60 * 5;
+            private const int FailTimeInSeconds = 60 * 5;
 
             /// <summary>
-            /// Last fail time
+            /// Last fail time.
             /// </summary>
-            protected DateTime failDate;
+            protected DateTime FailDate { get; private set; }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Address"/> class.
+            /// </summary>
+            /// <param name="service">The value to wrap.</param>
             public Address(ServiceHostEntry service)
             {
-                serviceHostEntry = service;
-                failDate = default(DateTime);
+                ServiceHostEntry = service;
+                FailDate = default(DateTime);
             }
 
             /// <summary>
-            /// service host entry given by the dns srv
+            /// service host entry given by the dns srv.
             /// </summary>
-            /// <value></value>
-            public ServiceHostEntry serviceHostEntry { get; }
+            /// <value>The ServiceHostEntry.</value>
+            public ServiceHostEntry ServiceHostEntry { get; }
 
             /// <summary>
-            /// Fail
+            /// Fail.
             /// </summary>
             public void Fail()
             {
-                failDate = DateTime.Now;
+                FailDate = DateTime.Now;
             }
 
             /// <summary>
-            /// Is available or is in quarantain
+            /// Is available or is in quarantain.
             /// </summary>
-            /// <returns>is available</returns>
+            /// <returns>Is available.</returns>
             public bool IsAvailable()
             {
-                return DateTime.Now > failDate.AddSeconds(failTimeInSeconds);
+                return DateTime.Now > FailDate.AddSeconds(FailTimeInSeconds);
             }
         }
 
         /// <summary>
-        /// IComparer function to sort the ServiceHostEntry by priority
+        /// IComparer function to sort the ServiceHostEntry by priority.
         /// </summary>
         protected class SrvCompare : IComparer<ServiceHostEntry>
         {
             /// <summary>
-            /// sort the ServiceHostEntry by priority
+            /// Sort the ServiceHostEntry by priority.
             /// </summary>
-            /// <param name="x">ServiceHostEntry 1</param>
-            /// <param name="y">ServiceHostEntry 2</param>
-            /// <returns>Upper or lower priority</returns>
+            /// <param name="x">ServiceHostEntry 1.</param>
+            /// <param name="y">ServiceHostEntry 2.</param>
+            /// <returns>Upper or lower priority.</returns>
             public int Compare(ServiceHostEntry x, ServiceHostEntry y)
             {
                 return x.Priority - y.Priority;
@@ -136,7 +139,8 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// make the DNS query and decide on a backend to use.
+        /// Initializes a new instance of the <see cref="GetDnsSrv"/> class.
+        /// Make the DNS query and decide on a backend to use.
         ///     Keep in cache the result of the DNS request and the choice of server.
         ///     use that server for cacheTime minutes
         /// when the cache expires, restart the process
@@ -148,6 +152,10 @@ namespace QarnotDsnHandler
         /// sleep some time (1 minute),
         /// reset everything and start again.
         /// </summary>
+        /// <param name="uri">Uri of the Api.</param>
+        /// <param name="cacheTime">Cache time in minutes.</param>
+        /// <param name="rand">Random parmaeter.</param>
+        /// <param name="lookupClient">Lookup client used to do the dns call.</param>
         public GetDnsSrv(string uri, int cacheTime = 5, Random rand = null, ILookupClient lookupClient = null)
         {
             Rand = rand ?? new Random();
@@ -155,38 +163,39 @@ namespace QarnotDsnHandler
             CacheTimeInMinute = cacheTime;
             ApiUri = uri;
             ConcurrencySafeLock = false;
-            DsnList = new List<Address>();
+            DnsList = new List<Address>();
             NextTimeCheck = default(DateTime);
             DnsTcpUrl = GetQarnotApiDnsAddress(uri);
             DnsSrvFind = DnsTcpUrl != null;
         }
 
         /// <summary>
-        /// Get the Uri from the current given address
+        /// Get the Uri from the current given address.
         /// </summary>
-        /// <returns></returns>
-        public Uri GetUri(string uriCall = null)
+        /// <param name="uriPath"> The uri following path.</param>
+        /// <returns>The uri create with the base uri find and the path given.</returns>
+        public Uri GetUri(string uriPath = null)
         {
-            var dnsUri = DsnCurrentAddress?.serviceHostEntry?.HostName;
+            var dnsUri = DnsCurrentAddress?.ServiceHostEntry?.HostName;
             var returnUrl = string.IsNullOrEmpty(dnsUri) ? this.ApiUri : "https://" + dnsUri + "/";
-            uriCall = uriCall == null ? string.Empty : uriCall;
+            uriPath = uriPath == null ? string.Empty : uriPath;
 
-            return new Uri(returnUrl + uriCall);
+            return new Uri(returnUrl + uriPath);
         }
 
         /// <summary>
         /// Put the actual Backend to fail and get an other backend if available
         /// if no backend available, wait 1 minute and start again.
         /// </summary>
-        /// <returns> </returns>
+        /// <param name="cancellationToken">cancellation Token.</param>
+        /// <returns>The Uri of the next dns found address.</returns>
         public async Task<Uri> NextApiUri(CancellationToken cancellationToken = default(CancellationToken))
         {
-            DsnCurrentAddress?.Fail();
+            DnsCurrentAddress?.Fail();
 
             int secondsToWaitBeforeRestart = 60;
-            // get dns valid address
-            DsnCurrentAddress = DsnList.Find(address => address.IsAvailable()); // need to check with a get?
-            while (DsnCurrentAddress == null && DsnList.Count > 0)
+            DnsCurrentAddress = DnsList.Find(address => address.IsAvailable());
+            while (DnsCurrentAddress == null && DnsList.Count > 0)
             {
                 await Task.Delay(secondsToWaitBeforeRestart * 1000);
                 await CallApiServerUri(cancellationToken);
@@ -198,6 +207,7 @@ namespace QarnotDsnHandler
         /// <summary>
         ///  Wait until the SafeLock is release.
         /// </summary>
+        /// <returns>Task.</returns>
         protected async Task Wait()
         {
             while (ConcurrencySafeLock)
@@ -215,8 +225,10 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// SafeLock call the Api server Addresses builder
+        /// SafeLock call the Api server Addresses builder.
         /// </summary>
+        /// <param name="cancellationToken">cancellation Token.</param>
+        /// <returns>Task.</returns>
         protected async Task CallApiServerUri(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (ConcurrencySafeLock == false)
@@ -224,7 +236,7 @@ namespace QarnotDsnHandler
                 ConcurrencySafeLock = true;
                 try
                 {
-                    await BuildDsnSvrListAsync(cancellationToken);
+                    await BuildDnsSvrListAsync(cancellationToken);
                     UpdateCheckTime();
                 }
                 catch
@@ -242,9 +254,10 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// Return a valid Qarnot Address from the DNS SRV records or return the uri given
+        /// Return a valid Qarnot Address from the DNS SRV records or return the uri given.
         /// </summary>
-        /// <returns>Uri of the string address of the Api</returns>
+        /// <param name="cancellationToken">cancellation Token.</param>
+        /// <returns>Uri of the string address of the Api.</returns>
         public async Task<Uri> BalanceApiServerUri(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (DateTime.Now > NextTimeCheck)
@@ -256,10 +269,10 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// Sort the ServiceHostEntry by priority
+        /// Sort the ServiceHostEntry by priority.
         /// </summary>
-        /// <param name="source"> ServiceHostEntries to be sort </param>
-        /// <returns>ServiceHostEntries sorted</returns>
+        /// <param name="source"> ServiceHostEntries to be sort. </param>
+        /// <returns>ServiceHostEntries sorted.</returns>
         protected IEnumerable<ServiceHostEntry> SortByPriority(IEnumerable<ServiceHostEntry> source)
         {
             var result = source.ToArray();
@@ -268,12 +281,11 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// return a sorted list using the weight to have a random distribution with the weight probability
+        /// Return a sorted list using the weight to have a random distribution with the weight probability.
         /// </summary>
-        /// <param name="priorityEnumerable"> ServiceHostEntries priority list </param>
-        /// <returns> ServiceHostEntries sort using the weight to draw the list</returns>
+        /// <param name="priorityEnumerable"> ServiceHostEntries priority list.</param>
+        /// <returns> ServiceHostEntries sort using the weight to draw the list.</returns>
         protected IEnumerable<ServiceHostEntry> LoadBalancePriorityArrayByWeight(IEnumerable<ServiceHostEntry> priorityEnumerable)
-        // Unit test need
         {
             // sort it with random extract each element with it's weight
             var drawByWeight = new List<ServiceHostEntry>();
@@ -285,10 +297,11 @@ namespace QarnotDsnHandler
                 int weightSum = list.Sum((x) => x.Weight);
                 int weightIncrement = 0;
                 var random = Rand.Next(0, weightSum - 1);
-                var priorityGet = list.First((x) => {
-                                                        weightIncrement += x.Weight;
-                                                        return weightIncrement > random;
-                                                    });
+                var priorityGet = list.First((x) =>
+                    {
+                        weightIncrement += x.Weight;
+                        return weightIncrement > random;
+                    });
                 drawByWeight.Add(priorityGet);
                 list.Remove(priorityGet);
             }
@@ -299,8 +312,8 @@ namespace QarnotDsnHandler
         /// <summary>
         /// Split the list by priority and draw it using the weight to sort it.
         /// </summary>
-        /// <param name="source">ServiceHostEntries sort by priority</param>
-        /// <returns>ServiceHostEntries sort by priority with the same priorities mix to have a weighted draw</returns>
+        /// <param name="source">ServiceHostEntries sort by priority.</param>
+        /// <returns>ServiceHostEntries sort by priority with the same priorities mix to have a weighted draw.</returns>
         protected IEnumerable<ServiceHostEntry> LoadBalanceByWeight(IEnumerable<ServiceHostEntry> source)
         {
             var weightSorted = new List<ServiceHostEntry>();
@@ -322,10 +335,10 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// return a list sort by priority them randomely using the by weight
+        /// Return a list sort by priority them randomely using the by weight.
         /// </summary>
-        /// <param name="source">ServiceHostEntries</param>
-        /// <returns>Sorted ServiceHostEntries</returns>
+        /// <param name="source">ServiceHostEntries.</param>
+        /// <returns>Sorted ServiceHostEntries.</returns>
         protected IEnumerable<ServiceHostEntry> SortByPriorityThemWeight(IEnumerable<ServiceHostEntry> source)
         {
             source = SortByPriority(source);
@@ -336,74 +349,42 @@ namespace QarnotDsnHandler
         }
 
         /// <summary>
-        /// Do a get request to the api server to check it's validity;
+        /// Call the dns and return the dns response.
         /// </summary>
-        /// <returns> return an HttpResponseMessage</returns>
-        // protected async Task<HttpResponseMessage> GetAsync(string url, CancellationToken cancellationToken = default(CancellationToken))
-        // {
-        //     _client.BaseAddress = new Uri(url);
-        //     var result = await _client.GetAsync("/settings", cancellationToken);
-
-        //     return result;
-        // }
-
-        /// <summary>
-        /// call the dns and return the dns response
-        /// </summary>
-        /// <returns>Dns Srv response</returns>
-        protected virtual async Task<IEnumerable<ServiceHostEntry>> ResolveDsnSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
+        /// <param name="tcpAddress">Address of the dns (format : _api._tcp).</param>
+        /// <param name="cancellationToken">cancellation Token.</param>
+        /// <returns>Dns Srv response.</returns>
+        protected virtual async Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
         {
             var dnsList = await DnsSrvClient.ResolveServiceAsync(tcpAddress, "api", System.Net.Sockets.ProtocolType.Tcp);
-            DnsSrvFind = (dnsList.Length > 0);
+            DnsSrvFind = dnsList.Length > 0;
 
             return dnsList;
         }
 
         /// <summary>
-        /// Check the address using a get call
+        /// Build a dns list sort by priority and balanced by weight.
         /// </summary>
-        /// <returns>bool, Success or fail</returns>
-        // protected async Task<bool> CheckDnsSrvUrlAsync(string uri, CancellationToken cancellationToken = default(CancellationToken))
-        // {
-        //     HttpResponseMessage response = await GetAsync(uri, cancellationToken);
-
-        //     return response.IsSuccessStatusCode;
-        // }
-
-        /// <summary>
-        /// build a dns list sort by priority and balanced by weight
-        /// </summary>
-        /// <returns>qarnot address</returns>
-        protected void CreateDnsList(IEnumerable<ServiceHostEntry> addressGiven, CancellationToken cancellationToken = default(CancellationToken))
+        /// <param name="addressGiven">Address list to be sort.</param>
+        protected void CreateDnsList(IEnumerable<ServiceHostEntry> addressGiven)
         {
             IEnumerable<ServiceHostEntry> sortAddresses = SortByPriorityThemWeight(addressGiven);
 
-            DsnList = sortAddresses.Select(service => new Address(service)).ToList();
-            if (DsnList.Count > 0)
+            DnsList = sortAddresses.Select(service => new Address(service)).ToList();
+            if (DnsList.Count > 0)
             {
-                DsnCurrentAddress = DsnList.First();
+                DnsCurrentAddress = DnsList.First();
             }
             else
             {
-                DsnCurrentAddress = null;
+                DnsCurrentAddress = null;
             }
-            // test addresses get
-            // usefull ?
-            // ?
-            // foreach (var address in sortAddresses)
-            // {
-            //     var testUri = "https://" + address.HostName;
-            //     if (await CheckDnsSrvUrlAsync(testUri, cancellationToken))
-            //     {
-            //         return testUri;
-            //     }
-            // }
         }
 
         /// <summary>
         /// Get qarnot tcp dns srv api url.
         /// </summary>
-        /// <param name="uri">Api Url</param>
+        /// <param name="uri">Api Url.</param>
         /// <returns>Qarnot tcp url or null.</returns>
         protected string GetQarnotApiDnsAddress(string uri)
         {
@@ -421,15 +402,16 @@ namespace QarnotDsnHandler
         /// <summary>
         /// Check the address,
         /// replace it to the Srv address if it's match
-        /// resolve it, sort it and test the addresses
-        /// return the first good address found or the uri given
+        /// resolve it, sort it and test the addresses.
         /// </summary>
-        protected async Task BuildDsnSvrListAsync(CancellationToken cancellationToken = default(CancellationToken))
+        /// <param name="cancellationToken">cancellation Token.</param>
+        /// <returns>Task.</returns>
+        protected async Task BuildDnsSvrListAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             if (DnsTcpUrl != null)
             {
-                var addressGiven = await ResolveDsnSvrUriAsync(DnsTcpUrl, cancellationToken);
-                CreateDnsList(addressGiven, cancellationToken);
+                var addressGiven = await ResolveDnsSvrUriAsync(DnsTcpUrl, cancellationToken);
+                CreateDnsList(addressGiven);
             }
         }
     }
