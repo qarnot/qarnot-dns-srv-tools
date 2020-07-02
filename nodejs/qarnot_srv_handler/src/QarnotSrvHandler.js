@@ -3,15 +3,18 @@ const srv_functions = require('./get_url_from_dns');
 
 class QarnotSrvHandler {
     constructor(axios, url, cache_duration) {
+        // const
         this.axios = axios;
         this.url = url;
         this.tcp_url = srv_functions.getQarnotDnsSrvTcpAddress(url);
-        // get tcp uri
         this.cache_duration = cache_duration
         this.unavailable_duration = 1
-        this.cache_time_next = Date.now(); // var
-        this.find = null // var
-        this.sort_list = null // var
+        this.all_unavailable_duration = 1
+        // var
+        this.cache_time_next = Date.now();
+        this.find = null
+        this.sort_list = null
+        // axios update
         axios.interceptors.request.use((request) => {
             return this.intercept_request_success(request).then((request) => request)
         }, (error) => { return this.intercept_request_error(error) })
@@ -25,18 +28,21 @@ class QarnotSrvHandler {
     async intercept_request_success(config) {
         const url_path = this.get_uri_path(config.url)
         config.url = await this.set_new_uri(config, url_path)
+        console.log(config.url)
 
         return config
     }
 
-    async update_url(config) {
-        if (this.cache_time_next < Date.now() && this.tcp_url) {
+    async update_url() {
+        if (this.tcp_url && this.cache_time_next < Date.now()) {
             // create a new dns call
             this.sort_list = await srv_functions.get_sort_tcp_list(this.tcp_url)
             this.cache_time_next = add_minutes(Date.now(), this.cache_duration)
+            this.find = null
 
-            if (this.sort_list) {
+            if (this.sort_list && this.sort_list.length > 0) {
                 this.sort_list.forEach(e => e.last_fail = Date.now())
+                this.find = this.sort_list[0]
             }
         }
     }
@@ -49,7 +55,7 @@ class QarnotSrvHandler {
     }
 
     async set_new_uri(config, url_path) {
-        await this.update_url(config)
+        await this.update_url()
         const new_url = this.get_valid_list_uri()
         if (url_path) {
             return new_url + "/" + url_path
@@ -64,7 +70,7 @@ class QarnotSrvHandler {
             return ""
         }
         else {
-            return url.substr(startUrlPath)
+            return url.substr(startUrlPath + 1)
         }
     }
 
@@ -75,14 +81,14 @@ class QarnotSrvHandler {
     async intercept_response_error(error) {
         if (this.unavailable_error(error.response.status)) {
             if (this.find) {
-                this.find.last_fail = add_minutes(Date.now(), 1)
+                this.find.last_fail = add_minutes(Date.now(), this.unavailable_duration)
             }
-            if (this.sort_list) {
-                if (this.sort_list && this.sort_list.length > 0) {
-                    this.find = this.sort_list.find(e => e.last_fail < Date.now())
-                    if (!this.find) {
-                        await minute_sleep(this.unavailable_duration)
-                    }
+            if (this.sort_list && this.sort_list.length > 0) {
+                this.find = this.sort_list.find(e => e.last_fail < Date.now())
+                if (!this.find) {
+                    await minute_sleep(this.all_unavailable_duration)
+                    await this.update_url()
+                    return await this.intercept_response_error(error)
                 }
             }
             return this.axios.request(error.config);
@@ -101,6 +107,8 @@ class QarnotSrvHandler {
             case ServerErrorGatewayTimeout:
             case ServerErrorInternal:
             case ServerErrorServiceUnavailable:
+            case 401:
+            case 404:
                 return true
             default:
                 return false

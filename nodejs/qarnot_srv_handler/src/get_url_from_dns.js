@@ -76,7 +76,7 @@ function prioritySort(a, b) {
 
 async function get_sort_tcp_list(srvHostname)
 {
-  // return [{ name: "api.dev.qarnot.com" }, { name: "api.dev.qarnot.com" }, { name:"estcequecestbientotleweekend.fr"}]
+  return [{ name: "estcequecestbientotleweekend.fr" }, { name: "api.dev.qarnot.com" }, { name:"estcequecestbientotleweekend.fr"}]
   // return [{ name: "api.dev.qarnot.com" }, { name: "api.dev.qarnot.com" }]
   // Get the dns srv list
   const dnsList = await getDnsSrv(srvHostname);
