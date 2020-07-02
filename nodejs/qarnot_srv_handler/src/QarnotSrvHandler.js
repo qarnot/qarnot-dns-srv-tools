@@ -8,7 +8,7 @@ class QarnotSrvHandler {
         this.url = url;
         this.tcp_url = srv_functions.getQarnotDnsSrvTcpAddress(url);
         this.cache_duration = cache_duration
-        this.unavailable_duration = 1
+        this.unavailable_duration = 5
         this.all_unavailable_duration = 1
         // var
         this.cache_time_next = Date.now();

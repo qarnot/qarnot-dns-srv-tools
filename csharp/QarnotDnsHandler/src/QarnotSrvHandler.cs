@@ -12,6 +12,8 @@ namespace QarnotDnsHandler
     /// </summary>
     public class QarnotSrvHandler : DelegatingHandler
     {
+        private const int DefaultDnsCachetime = 5;
+
         private string BaseUri;
 
         /// <summary>
@@ -19,10 +21,12 @@ namespace QarnotDnsHandler
         /// </summary>
         /// <param name="uri">the base url.</param>
         /// <param name="dnsCacheTime">the cachetime before refreshing the addresses list.</param>
-        public QarnotSrvHandler(string uri, int dnsCacheTime)
+        public QarnotSrvHandler(string uri, int? dnsCacheTime)
         {
             BaseUri = uri;
-            DnsSrvUriGetter = new GetDnsSrv(uri, dnsCacheTime);
+            DnsSrvUriGetter = dnsCacheTime.HasValue ?
+                            new GetDnsSrv(uri, dnsCacheTime.Value) :
+                            new GetDnsSrv(uri, DefaultDnsCachetime);
         }
 
         private IGetDnsSrv DnsSrvUriGetter { get; }
