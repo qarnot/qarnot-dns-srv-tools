@@ -24,7 +24,7 @@ namespace QarnotDnsHandler
         public static string DnsDomain { get { return Environment.GetEnvironmentVariable(QARNOT_DNS_DOMAIN); } }
 
         /// <summary>
-        /// return the QARNOT_DNS_PROTOCOL environment variable
+        /// return the QARNOT_DNS_PROTOCOL environment variable, see the format ire:
         /// https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.protocoltype?view=netcore-3.1
         /// </summary>
         /// <typeparam name="System.Net.Sockets.ProtocolType"></typeparam>

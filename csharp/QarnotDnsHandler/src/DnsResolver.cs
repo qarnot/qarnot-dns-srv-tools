@@ -73,7 +73,7 @@ namespace QarnotDnsHandler
             return null;
         }
 
-        public string buildUri(string hostName, string path)
+        public string BuildUri(string hostName, string path)
         {
             if (DnsSrvMatch && !string.IsNullOrEmpty(hostName))
             {

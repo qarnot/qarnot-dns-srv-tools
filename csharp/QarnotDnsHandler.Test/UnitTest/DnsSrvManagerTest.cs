@@ -73,13 +73,15 @@ namespace QarnotDnsHandler.Test
             Assert.AreEqual(GetUri(), null);
             DnsCurrentAddress = new Address(null, 1);
             Assert.AreEqual(GetUri(), null);
-            DnsCurrentAddress = new Address(new ServiceHostEntry()
-            {
-                Port = 430,
-                Priority = 4,
-                Weight = 10,
-                HostName = "testSuccess",
-            }, 1);
+            DnsCurrentAddress = new Address(
+                new ServiceHostEntry()
+                {
+                    Port = 430,
+                    Priority = 4,
+                    Weight = 10,
+                    HostName = "testSuccess",
+                },
+                1);
             Assert.AreEqual(GetUri(), "https://testSuccess");
         }
 

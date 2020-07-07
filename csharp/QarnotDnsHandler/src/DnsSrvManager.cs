@@ -185,7 +185,7 @@ namespace QarnotDnsHandler
         /// <returns>The uri create with the base uri find and the path given.</returns>
         public Uri GetUri(string uriPath = null)
         {
-            string urlBase = DnsUrlResolver.buildUri(DnsCurrentAddress?.ServiceHostEntry?.HostName, uriPath);
+            string urlBase = DnsUrlResolver.BuildUri(DnsCurrentAddress?.ServiceHostEntry?.HostName, uriPath);
             return urlBase == null ? null : new Uri(urlBase);
         }
 
