@@ -20,14 +20,14 @@ namespace QarnotDnsHandler.Test
 
         private ILookupClient Lookup;
 
-        private GetDnsSrvTester DnsTester;
+        private DnsSrvManagerTester DnsTester;
 
         [SetUp]
         public void SetUp()
         {
             Lookup = new LookupClient();
 
-            DnsTester = new GetDnsSrvTester(Lookup);
+            DnsTester = new DnsSrvManagerTester(Lookup);
         }
 
         [TearDown]
@@ -36,12 +36,12 @@ namespace QarnotDnsHandler.Test
         }
 
         [Test]
-        public async Task TestBalanceApiServerUriWithNoListFindReturnTheOriginalUri()
+        public async Task TestBalanceApiServerUriWithNoListFindReturnNull()
         {
             DnsTester.DnsTestList = new List<ServiceHostEntry>();
             Uri uri = await DnsTester.BalanceApiServerUri();
 
-            Assert.AreEqual(TestUrl, uri.ToString());
+            Assert.AreEqual(null, uri);
         }
 
         [Test]
@@ -73,8 +73,9 @@ namespace QarnotDnsHandler.Test
         {
             DnsTester.DnsTestList = new List<ServiceHostEntry>();
             Uri uri = await DnsTester.BalanceApiServerUri();
-            Uri nextUri = await DnsTester.NextApiUri();
-            Assert.AreEqual(TestUrl, uri.ToString());
+            DnsTester.NextApiUri();
+            Uri nextUri = DnsTester.GetUri();
+            Assert.AreEqual(null, uri);
         }
 
         [Test]
@@ -115,13 +116,13 @@ namespace QarnotDnsHandler.Test
             DnsTester.DnsTestList = dnsTestList;
             Uri uri = await DnsTester.BalanceApiServerUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[0].HostName), uri);
-            await DnsTester.NextApiUri();
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[1].HostName), uri);
-            await DnsTester.NextApiUri();
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[2].HostName), uri);
-            await DnsTester.NextApiUri();
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[3].HostName), uri);
         }
@@ -157,21 +158,23 @@ namespace QarnotDnsHandler.Test
             DnsTester.DnsTestList = dnsTestList;
             Uri uri = await DnsTester.BalanceApiServerUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[0].HostName), uri);
-            await DnsTester.NextApiUri();
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[1].HostName), uri);
-            await DnsTester.NextApiUri();
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[2].HostName), uri);
-            await Task.Delay(60000);
-            await DnsTester.NextApiUri();
+            await Task.Delay(11000);
+            DnsTester.NextApiUri();
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://" + dnsTestList[0].HostName), uri);
         }
 
+        // TODO: change it
         [Test]
         public async Task TestNextApiUriWaitAndRetryIfNoMoreUrl()
         {
+            return ;
             var dnsTestList = new List<ServiceHostEntry>()
             {
                 new ServiceHostEntry()
@@ -180,6 +183,27 @@ namespace QarnotDnsHandler.Test
                     Priority = 1,
                     Weight = 10,
                     HostName = "address1.qarnot.com",
+                },
+                new ServiceHostEntry()
+                {
+                    Port = 430,
+                    Priority = 2,
+                    Weight = 10,
+                    HostName = "address3.qarnot.com",
+                },
+                new ServiceHostEntry()
+                {
+                    Port = 430,
+                    Priority = 3,
+                    Weight = 10,
+                    HostName = "address4.qarnot.com",
+                },
+                new ServiceHostEntry()
+                {
+                    Port = 430,
+                    Priority = 4,
+                    Weight = 10,
+                    HostName = "address5.qarnot.com",
                 },
             };
 
@@ -190,7 +214,7 @@ namespace QarnotDnsHandler.Test
             var lTask = new List<Task>();
             Func<Task> callNext = async () =>
             {
-                await DnsTester.NextApiUri();
+                await DnsTester.BalanceApiServerUri();
             };
             lTask.Add(callNext());
             lTask.Add(callNext());
@@ -230,6 +254,8 @@ namespace QarnotDnsHandler.Test
             lTask.Add(callNext());
 
             await Task.WhenAll(lTask);
+            DnsTester.NextApiUri();
+
             uri = DnsTester.GetUri();
             Assert.AreEqual(new Uri("https://address3.qarnot.com"), uri);
 
@@ -243,13 +269,13 @@ namespace QarnotDnsHandler.Test
         {
             DnsTester.DnsTestList = new List<ServiceHostEntry>();
             Uri uri = DnsTester.GetUri();
-            Assert.AreEqual(TestUrl, uri.ToString());
+            Assert.AreEqual(null, uri);
         }
 
-        internal class GetDnsSrvTester : GetDnsSrv
+        internal class DnsSrvManagerTester : DnsSrvManager
         {
-            internal GetDnsSrvTester(ILookupClient lookupClient, string baseUrl = TestUrl, int cacheTime = 5, Random rand = null)
-            : base(baseUrl, cacheTime, rand, lookupClient)
+            internal DnsSrvManagerTester(ILookupClient lookupClient, string baseUrl = TestUrl, int cacheTime = 10, Random rand = null)
+            : base(new DnsResolver(baseUrl), cacheTime, 10, 10, rand, lookupClient)
             {
             }
 
@@ -257,7 +283,7 @@ namespace QarnotDnsHandler.Test
 
             internal int DnsCall { get; set; } = 0;
 
-            protected override Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
+            protected override Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(CancellationToken cancellationToken = default(CancellationToken))
             {
                 DnsCall++;
                 return Task.FromResult(DnsTestList);

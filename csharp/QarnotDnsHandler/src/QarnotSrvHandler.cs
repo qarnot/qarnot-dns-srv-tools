@@ -2,6 +2,7 @@ namespace QarnotDnsHandler
 {
     using System.Collections.Generic;
     using System.Net.Http;
+    using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -12,8 +13,6 @@ namespace QarnotDnsHandler
     /// </summary>
     public class QarnotSrvHandler : DelegatingHandler
     {
-        private const int DefaultDnsCachetime = 5;
-
         private string BaseUri;
 
         /// <summary>
@@ -21,15 +20,29 @@ namespace QarnotDnsHandler
         /// </summary>
         /// <param name="uri">the base url.</param>
         /// <param name="dnsCacheTime">the cachetime before refreshing the addresses list.</param>
-        public QarnotSrvHandler(string uri, int? dnsCacheTime)
+        public QarnotSrvHandler(string uri, int? dnsCacheTime = null, int? dnsFailTime = null, int? dnsRetrieveTime = null, string service = null, string domain = null, ProtocolType? protocol = null)
         {
             BaseUri = uri;
-            DnsSrvUriGetter = dnsCacheTime.HasValue ?
-                            new GetDnsSrv(uri, dnsCacheTime.Value) :
-                            new GetDnsSrv(uri, DefaultDnsCachetime);
+
+            service = service ?? QEnvVariables.DnsService;
+            domain = domain ?? QEnvVariables.DnsDomain;
+            protocol = protocol ?? QEnvVariables.DnsProtocol;
+            var serviceValue = service ?? DnsResolver.DEFAULT_SERVICE;
+            var domainValue = domain ?? DnsResolver.DEFAULT_DOMAIN;
+            var protocolValue = protocol ?? DnsResolver.DEFAULT_PROTOCOL;
+            DnsUrlResolver = new DnsResolver(uri, serviceValue, domainValue, protocolValue);
+
+            dnsCacheTime = dnsCacheTime ?? QEnvVariables.DnsCachetime;
+            dnsFailTime = dnsFailTime ?? QEnvVariables.DnsFailTime;
+            dnsRetrieveTime = dnsRetrieveTime ?? QEnvVariables.DnsRetrieve;
+            var cachetime = dnsCacheTime ?? DnsSrvManager.DEFAULT_CACHETIME;
+            var failtime = dnsFailTime ?? DnsSrvManager.DEFAULT_FAILTIME;
+            var retrievetime = dnsRetrieveTime ?? DnsSrvManager.DEFAULT_RETRIEVETIME;
+            DnsSrvUriGetter = new DnsSrvManager(DnsUrlResolver, cachetime, failtime, retrievetime);
         }
 
-        private IGetDnsSrv DnsSrvUriGetter { get; }
+        private IDnsSrvManager DnsSrvUriGetter { get; }
+        private DnsResolver DnsUrlResolver { get; }
 
         /// <summary>
         /// SendAsync override method.
@@ -45,7 +58,11 @@ namespace QarnotDnsHandler
             {
                 // change the uri if needed
                 await DnsSrvUriGetter.BalanceApiServerUri(cancellationToken);
-                request.RequestUri = DnsSrvUriGetter.GetUri(pathUri);
+                var requestUri = DnsSrvUriGetter.GetUri(pathUri);
+                if (requestUri != null)
+                {
+                    request.RequestUri = requestUri;
+                }
 
                 // get the response
                 var response = await base.SendAsync(request, cancellationToken);
@@ -57,13 +74,14 @@ namespace QarnotDnsHandler
                 }
 
                 // or change the uri used
-                await DnsSrvUriGetter.NextApiUri(cancellationToken);
+                if (DnsSrvUriGetter.NextApiUri() == false)
+                    return response;
             }
         }
 
         private bool AvailableServer(HttpResponseMessage response)
         {
-            return !DnsSrvUriGetter.DnsSrvFind || !ServerUnavailable(response);
+            return !DnsUrlResolver.DnsSrvMatch || !ServerUnavailable(response);
         }
 
         /// <summary>

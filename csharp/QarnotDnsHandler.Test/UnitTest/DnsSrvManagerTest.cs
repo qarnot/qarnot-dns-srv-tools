@@ -14,24 +14,12 @@ namespace QarnotDnsHandler.Test
 #pragma warning disable CA1305, CA1303
 
     [TestFixture]
-    public class GetDnsSrvTest : GetDnsSrv
+    public class DnsSrvManagerTest : DnsSrvManager
     {
         private static ILookupClient lookClient = new LookupClient();
-        public GetDnsSrvTest()
-                : base("https://uri", lookupClient: lookClient)
+        public DnsSrvManagerTest()
+                : base(new DnsResolver("https://api.qarnot.com"), lookupClient: lookClient)
         {
-        }
-
-        [Test]
-        public void VerifyGetQarnotApiDnsAddressReturnValue()
-        {
-            Assert.AreEqual("qarnot.com", GetQarnotApiDnsAddress("https://api.qarnot.com"));
-            Assert.AreEqual("qualif.qarnot.com", GetQarnotApiDnsAddress("https://api.qualif.qarnot.com"));
-            Assert.AreEqual("dev.qarnot.com", GetQarnotApiDnsAddress("https://api.dev.qarnot.com"));
-            Assert.AreEqual(null, GetQarnotApiDnsAddress("https://apitest.qarnot.com"));
-            Assert.AreEqual(null, GetQarnotApiDnsAddress("https://apiqarnot.com"));
-            Assert.AreEqual(null, GetQarnotApiDnsAddress("https://api.hello.com"));
-            Assert.AreEqual(null, GetQarnotApiDnsAddress("https://bob.qarnot.com"));
         }
 
         [Test]
@@ -82,16 +70,16 @@ namespace QarnotDnsHandler.Test
         public void VerifyGetUriReturn()
         {
             DnsCurrentAddress = null;
-            Assert.AreEqual(GetUri(), "https://uri");
-            DnsCurrentAddress = new Address(null);
-            Assert.AreEqual(GetUri(), "https://uri");
+            Assert.AreEqual(GetUri(), null);
+            DnsCurrentAddress = new Address(null, 1);
+            Assert.AreEqual(GetUri(), null);
             DnsCurrentAddress = new Address(new ServiceHostEntry()
             {
                 Port = 430,
                 Priority = 4,
                 Weight = 10,
                 HostName = "testSuccess",
-            });
+            }, 1);
             Assert.AreEqual(GetUri(), "https://testSuccess");
         }
 

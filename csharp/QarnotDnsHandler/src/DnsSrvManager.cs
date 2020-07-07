@@ -14,8 +14,25 @@ namespace QarnotDnsHandler
     /// Check and get an srv uri given by the qarnot dns srv address
     /// or return the given address.
     /// </summary>
-    public class GetDnsSrv : IGetDnsSrv
+    public class DnsSrvManager : IDnsSrvManager
     {
+        /// <summary>
+        /// Default cache time value in seconds
+        /// </summary>
+        public const int DEFAULT_CACHETIME = 5 * 60;
+
+        /// <summary>
+        /// Default fail time before reuse value in seconds
+        /// </summary>
+        public const int DEFAULT_FAILTIME = 60;
+
+        /// <summary>
+        /// default retrieve wait time if no address available
+        /// </summary>
+        public const int DEFAULT_RETRIEVETIME = 5 * 60;
+
+        private SemaphoreSlim semaphore;
+
         /// <summary>
         /// Random object create in the constructor.
         /// </summary>
@@ -28,34 +45,22 @@ namespace QarnotDnsHandler
         protected DateTime NextTimeCheck { get; set; }
 
         /// <summary>
-        /// Time, in minutes, of the connection cache before changing it.
+        /// Time connection cache, in seconds, before recall it.
         /// </summary>
-        /// <value>Time in minutes.</value>
-        protected int CacheTimeInMinute { get; }
+        /// <value>Time in seconds.</value>
+        protected int CacheTimeInSeconds { get; }
 
         /// <summary>
-        /// ApiUri given by the user.
+        /// Time, in seconds, before reusing an address after a fail.
         /// </summary>
-        /// <value>Api url given.</value>
-        protected string ApiUri { get; }
+        /// <value>Time in seconds.</value>
+        protected int FailTimeInSeconds { get; }
 
         /// <summary>
-        /// Qarnot Tcp url.
+        /// Time, in seconds, to wait before recalling the dns if all the dns addresses had fail.
         /// </summary>
-        /// <value>The tcp uri create withe the qarnot api uri. </value>
-        protected string DnsTcpUrl { get; }
-
-        /// <summary>
-        /// A valid qarnot DnsSrv find.
-        /// </summary>
-        /// <value>Is Api uri good and the dns call return a value.</value>
-        public bool DnsSrvFind { get; private set; }
-
-        /// <summary>
-        /// Safe Lock if the GetDnsSrv is used conncurency.
-        /// </summary>
-        /// <value>SafeLock for do not multicall the dns.</value>
-        protected bool ConcurrencySafeLock { get; set; }
+        /// <value>Time in seconds.</value>
+        protected int RetrieveTimeInSeconds { get; }
 
         /// <summary>
         /// Dns List find.
@@ -70,7 +75,8 @@ namespace QarnotDnsHandler
         /// <summary>
         /// The dns library.
         /// </summary>
-        protected ILookupClient DnsSrvClient { get; set; }
+        protected DnsResolver DnsUrlResolver { get; set; }
+
 
         /// <summary>
         /// Addresses find by the dns.
@@ -80,7 +86,7 @@ namespace QarnotDnsHandler
             /// <summary>
             /// quarantain time in seconds.
             /// </summary>
-            private const int FailTimeInSeconds = 60 * 5;
+            private int FailTimeInSeconds { get; }
 
             /// <summary>
             /// Last fail time.
@@ -91,8 +97,9 @@ namespace QarnotDnsHandler
             /// Initializes a new instance of the <see cref="Address"/> class.
             /// </summary>
             /// <param name="service">The value to wrap.</param>
-            public Address(ServiceHostEntry service)
+            public Address(ServiceHostEntry service, int failTimeInSeconds)
             {
+                FailTimeInSeconds = failTimeInSeconds;
                 ServiceHostEntry = service;
                 FailDate = default(DateTime);
             }
@@ -139,10 +146,10 @@ namespace QarnotDnsHandler
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GetDnsSrv"/> class.
+        /// Initializes a new instance of the <see cref="DnsSrvManager"/> class.
         /// Make the DNS query and decide on a backend to use.
         ///     Keep in cache the result of the DNS request and the choice of server.
-        ///     use that server for cacheTime minutes
+        ///     use that server for cacheTime
         /// when the cache expires, restart the process
         /// in case a backend becomes unavailable,
         /// put the backend in quarantine for 5 minutes
@@ -153,20 +160,22 @@ namespace QarnotDnsHandler
         /// reset everything and start again.
         /// </summary>
         /// <param name="uri">Uri of the Api.</param>
-        /// <param name="cacheTime">Cache time in minutes.</param>
+        /// <param name="cacheTime">Cache time in seconds.</param>
         /// <param name="rand">Random parmaeter.</param>
         /// <param name="lookupClient">Lookup client used to do the dns call.</param>
-        public GetDnsSrv(string uri, int cacheTime = 5, Random rand = null, ILookupClient lookupClient = null)
+        public DnsSrvManager(DnsResolver dnsResolver, int cacheTime = DEFAULT_CACHETIME, int failTime = DEFAULT_FAILTIME, int retrieveTime = DEFAULT_RETRIEVETIME, Random rand = null, ILookupClient lookupClient = null)
         {
+            semaphore = new SemaphoreSlim(0, 1);
             Rand = rand ?? new Random();
-            DnsSrvClient = lookupClient ?? new LookupClient();
-            CacheTimeInMinute = cacheTime;
-            ApiUri = uri;
-            ConcurrencySafeLock = false;
-            DnsList = new List<Address>();
+            DnsUrlResolver = dnsResolver;
+            CacheTimeInSeconds = cacheTime;
+            FailTimeInSeconds = failTime;
+            RetrieveTimeInSeconds = retrieveTime;
+            // ApiUri = uri;
+            DnsList = null;
             NextTimeCheck = default(DateTime);
-            DnsTcpUrl = GetQarnotApiDnsAddress(uri);
-            DnsSrvFind = DnsTcpUrl != null;
+            // DnsTcpUrl = GetQarnotApiDnsAddress(uri, service_name, protocol, domain);
+            // DnsSrvFind = DnsTcpUrl != null;
         }
 
         /// <summary>
@@ -176,11 +185,8 @@ namespace QarnotDnsHandler
         /// <returns>The uri create with the base uri find and the path given.</returns>
         public Uri GetUri(string uriPath = null)
         {
-            var dnsUri = DnsCurrentAddress?.ServiceHostEntry?.HostName;
-            var returnUrl = string.IsNullOrEmpty(dnsUri) ? this.ApiUri : "https://" + dnsUri + "/";
-            uriPath = uriPath == null ? string.Empty : uriPath;
-
-            return new Uri(returnUrl + uriPath);
+            string urlBase = DnsUrlResolver.buildUri(DnsCurrentAddress?.ServiceHostEntry?.HostName, uriPath);
+            return urlBase == null ? null : new Uri(urlBase);
         }
 
         /// <summary>
@@ -189,31 +195,21 @@ namespace QarnotDnsHandler
         /// </summary>
         /// <param name="cancellationToken">cancellation Token.</param>
         /// <returns>The Uri of the next dns found address.</returns>
-        public async Task<Uri> NextApiUri(CancellationToken cancellationToken = default(CancellationToken))
+        public bool NextApiUri()
         {
             DnsCurrentAddress?.Fail();
-
-            int secondsToWaitBeforeRestart = 60;
             DnsCurrentAddress = DnsList.Find(address => address.IsAvailable());
-            while (DnsCurrentAddress == null && DnsList.Count > 0)
+            if (DnsCurrentAddress == null)
             {
-                await Task.Delay(secondsToWaitBeforeRestart * 1000);
-                await CallApiServerUri(cancellationToken);
+                if (NextTimeCheck > DateTime.Now.AddSeconds(RetrieveTimeInSeconds))
+                {
+                    NextTimeCheck = DateTime.Now.AddSeconds(RetrieveTimeInSeconds);
+                }
+
+                return false;
             }
 
-            return GetUri();
-        }
-
-        /// <summary>
-        ///  Wait until the SafeLock is release.
-        /// </summary>
-        /// <returns>Task.</returns>
-        protected async Task Wait()
-        {
-            while (ConcurrencySafeLock)
-            {
-                await Task.Delay(50);
-            }
+            return true;
         }
 
         /// <summary>
@@ -221,7 +217,7 @@ namespace QarnotDnsHandler
         /// </summary>
         protected void UpdateCheckTime()
         {
-            NextTimeCheck = DateTime.Now.AddMinutes(CacheTimeInMinute);
+            NextTimeCheck = DateTime.Now.AddSeconds(CacheTimeInSeconds);
         }
 
         /// <summary>
@@ -231,26 +227,9 @@ namespace QarnotDnsHandler
         /// <returns>Task.</returns>
         protected async Task CallApiServerUri(CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (ConcurrencySafeLock == false)
-            {
-                ConcurrencySafeLock = true;
-                try
-                {
-                    await BuildDnsSvrListAsync(cancellationToken);
-                    UpdateCheckTime();
-                }
-                catch
-                {
-                    ConcurrencySafeLock = false;
-                    throw;
-                }
-
-                ConcurrencySafeLock = false;
-            }
-            else
-            {
-                await Wait();
-            }
+            semaphore.Release();
+            await BuildDnsSvrListAsync(cancellationToken);
+            UpdateCheckTime();
         }
 
         /// <summary>
@@ -351,15 +330,15 @@ namespace QarnotDnsHandler
         /// <summary>
         /// Call the dns and return the dns response.
         /// </summary>
-        /// <param name="tcpAddress">Address of the dns (format : _api._tcp).</param>
         /// <param name="cancellationToken">cancellation Token.</param>
         /// <returns>Dns Srv response.</returns>
-        protected virtual async Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(string tcpAddress, CancellationToken cancellationToken = default(CancellationToken))
+        protected virtual async Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var dnsList = await DnsSrvClient.ResolveServiceAsync(tcpAddress, "api", System.Net.Sockets.ProtocolType.Tcp);
-            DnsSrvFind = dnsList.Length > 0;
+            return await DnsUrlResolver.ResolveServiceAsync(cancellationToken);
+            // var dnsList = await DnsSrvClient.ResolveServiceAsync(tcpAddress, "api", System.Net.Sockets.ProtocolType.Tcp);
+            // DnsSrvFind = dnsList.Length > 0;
 
-            return dnsList;
+            // return dnsList;
         }
 
         /// <summary>
@@ -368,9 +347,14 @@ namespace QarnotDnsHandler
         /// <param name="addressGiven">Address list to be sort.</param>
         protected void CreateDnsList(IEnumerable<ServiceHostEntry> addressGiven)
         {
+            if (addressGiven == null)
+            {
+                addressGiven = new List<ServiceHostEntry>();
+            }
+
             IEnumerable<ServiceHostEntry> sortAddresses = SortByPriorityThemWeight(addressGiven);
 
-            DnsList = sortAddresses.Select(service => new Address(service)).ToList();
+            DnsList = sortAddresses.Select(service => new Address(service, FailTimeInSeconds)).ToList();
             if (DnsList.Count > 0)
             {
                 DnsCurrentAddress = DnsList.First();
@@ -382,24 +366,6 @@ namespace QarnotDnsHandler
         }
 
         /// <summary>
-        /// Get qarnot tcp dns srv api url.
-        /// </summary>
-        /// <param name="uri">Api Url.</param>
-        /// <returns>Qarnot tcp url or null.</returns>
-        protected string GetQarnotApiDnsAddress(string uri)
-        {
-            const string regexStr = @"https://api(\.)(.*\.?)?qarnot\.com";
-            var regex = new Regex(regexStr);
-
-            if (regex.Match(uri).Success)
-            {
-                return Regex.Replace(uri, regexStr, "$2qarnot.com");
-            }
-
-            return null;
-        }
-
-        /// <summary>
         /// Check the address,
         /// replace it to the Srv address if it's match
         /// resolve it, sort it and test the addresses.
@@ -408,9 +374,10 @@ namespace QarnotDnsHandler
         /// <returns>Task.</returns>
         protected async Task BuildDnsSvrListAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (DnsTcpUrl != null)
+            if (DnsUrlResolver.DnsSrvMatch)
             {
-                var addressGiven = await ResolveDnsSvrUriAsync(DnsTcpUrl, cancellationToken);
+                var addressGiven = await ResolveDnsSvrUriAsync(cancellationToken);
+                // var addressGiven = await DnsUrlResolver.ResolveServiceAsync(cancellationToken);
                 CreateDnsList(addressGiven);
             }
         }

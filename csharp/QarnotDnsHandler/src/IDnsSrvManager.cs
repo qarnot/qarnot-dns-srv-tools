@@ -9,13 +9,8 @@ namespace QarnotDnsHandler
     /// <summary>
     /// Get specific uri interface.
     /// </summary>
-    public interface IGetDnsSrv
+    public interface IDnsSrvManager
     {
-        /// <summary>
-        /// Gets a value indicating whether the DnsSrv is find.
-        /// </summary>
-        bool DnsSrvFind { get; }
-
         /// <summary>
         /// Get the Uri from the current given address.
         /// </summary>
@@ -33,6 +28,6 @@ namespace QarnotDnsHandler
         /// Put the backend in quarantine and choose another backend.
         /// </summary>
         /// <returns>Backend server uri.</returns>
-        Task<Uri> NextApiUri(CancellationToken cancellationToken = default(CancellationToken));
+        bool NextApiUri();
     }
 }
