@@ -1,5 +1,6 @@
 namespace QarnotDnsHandler.Test
 {
+    using System;
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
@@ -36,6 +37,7 @@ namespace QarnotDnsHandler.Test
             var response = await Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)).ConfigureAwait(false);
             var message = string.Empty;
             var uriCall = request?.RequestUri?.ToString();
+            Console.WriteLine(uriCall);
             if (ReturnMessageDictionary != null && ReturnMessageDictionary.ContainsKey(uriCall))
             {
                 message = ReturnMessageDictionary[uriCall];

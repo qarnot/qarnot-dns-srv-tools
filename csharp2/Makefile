@@ -1,0 +1,65 @@
+NAME="DnsSrvTool"
+TEST_NAME=${NAME}.Test
+DOC_NAME=${NAME}.Document
+CSPROJ=${NAME}/${NAME}.csproj
+
+all: restore build test
+
+restore:
+	dotnet restore
+
+build:
+	@echo "\e[92mBuild project:\033[0m"
+	dotnet build
+
+test:
+	@echo "\e[92mTest project Unit tests:\033[0m"
+	dotnet test /p:CollectCoverage=true
+
+release:
+	dotnet --info
+	dotnet build -c Release
+
+publish-binaries:
+	dotnet publish ${CSPROJ} -c Release -r osx-x64 --self-contained true /p:PublishSingleFile=true -o ./publish/bin/osx
+	dotnet publish ${CSPROJ} -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true -o ./publish/bin/linux
+	dotnet publish ${CSPROJ} -c Release -r win10-x64 --self-contained true /p:PublishSingleFile=true -o ./publish/bin/win10
+
+publish-nuget:
+	nuget pack ${NAME}/${NAME}.nuspec -OutputDirectory ./publish/nuget
+	# dotnet pack
+
+document:
+	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe build ${DOC_NAME}/docfx_project/docfx.json
+
+coverage: coverage-dotnet# run all tests and collect coverage
+
+coverage-dotnet:
+	@echo "\e[92mRunning Code Coverage:\033[0m"
+	dotnet test ${TEST_NAME} --collect:\"XPlat Code Coverage\" --settings coverlet.runsettings
+	@# see https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/VSTestIntegration.md
+
+coverage-msbuild:
+	@echo "\e[92mRunning Code Coverage:\033[0m"
+	dotnet test ${TEST_NAME} /p:CollectCoverage=true /p:Threshold=80 /p:CoverletOutput="./coverage/" /p:Include="[${NAME}.*]*" -nr:false -m:1
+	@echo "\e[92mYou Can find Code Coveage Results in coverage:\033[0m"
+	@#see https://github.com/tonerdo/coverlet/blob/master/Documentation/MSBuildIntegration.md for improvement
+
+help:
+	@echo "\e[92mThis Makefile contains the following targets:\033[0m"
+	$(call get_targets_list)
+
+
+# Function part of the makefile:
+# keep tricky functions here and call them from
+# all the targets
+define get_targets_list
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+endef
+
+
+clean:
+	@echo "\e[43mNo Clean yet\033[0m"
+	exit(1)
+
+.PHONY: all bin-publish build clean coverage document nuget-publish release restore test

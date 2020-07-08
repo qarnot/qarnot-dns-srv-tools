@@ -1,0 +1,9 @@
+.Qarnot
+*.log
+TestResult
+bin/
+*/bin/
+obj/
+*/obj/
+coverage
+publish

@@ -335,10 +335,6 @@ namespace QarnotDnsHandler
         protected virtual async Task<IEnumerable<ServiceHostEntry>> ResolveDnsSvrUriAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return await DnsUrlResolver.ResolveServiceAsync(cancellationToken);
-            // var dnsList = await DnsSrvClient.ResolveServiceAsync(tcpAddress, "api", System.Net.Sockets.ProtocolType.Tcp);
-            // DnsSrvFind = dnsList.Length > 0;
-
-            // return dnsList;
         }
 
         /// <summary>

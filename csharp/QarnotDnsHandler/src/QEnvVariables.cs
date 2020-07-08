@@ -29,7 +29,7 @@ namespace QarnotDnsHandler
         /// </summary>
         /// <typeparam name="System.Net.Sockets.ProtocolType"></typeparam>
         /// <returns></returns>
-        public static System.Net.Sockets.ProtocolType DnsProtocol { get { return GetEnumEnvironmentVariable<System.Net.Sockets.ProtocolType>(QARNOT_DNS_PROTOCOL); } }
+        public static System.Net.Sockets.ProtocolType? DnsProtocol { get { return GetEnumEnvironmentVariable<System.Net.Sockets.ProtocolType>(QARNOT_DNS_PROTOCOL); } }
 
         private static int? GetIntegerEnvironmentVariable(string environmentVariableName)
         {
@@ -40,9 +40,11 @@ namespace QarnotDnsHandler
             return Int32.Parse(envVariable);
         }
 
-        private static T GetEnumEnvironmentVariable<T>(string environmentVariableName) where T : struct, Enum
+        private static T? GetEnumEnvironmentVariable<T>(string environmentVariableName) where T : struct, Enum
         {
             var envVariable = Environment.GetEnvironmentVariable(environmentVariableName);
+            if (string.IsNullOrEmpty(envVariable))
+                return null;
 
             return (T)Enum.Parse(typeof(T), envVariable);
         }
