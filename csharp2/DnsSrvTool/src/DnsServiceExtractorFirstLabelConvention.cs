@@ -15,12 +15,15 @@ namespace DnsSrvTool
 
         public DnsSrvServiceDescription FromUri(Uri uri)
         {
-            var protocol = ProtocolType.Tcp;
             var splitIndex = uri.DnsSafeHost.IndexOf(".");
+            var serviceName = uri.DnsSafeHost.Substring(0, splitIndex);
+            var domain = uri.DnsSafeHost.Substring(splitIndex + 1);
+
             var dnsSrvServiceDescription = new DnsSrvServiceDescription(
-                serviceName:uri.DnsSafeHost.Substring(0, splitIndex),
+                serviceName:serviceName,
                 protocol:Protocol,
-                domain:uri.DnsSafeHost.Substring(splitIndex + 1));
+                domain:domain);
+
             return dnsSrvServiceDescription;
         }
     }

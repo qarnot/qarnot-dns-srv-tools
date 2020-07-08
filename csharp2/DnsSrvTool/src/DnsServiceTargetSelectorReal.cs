@@ -53,7 +53,7 @@ namespace DnsSrvTool
 
         public async Task<DnsEndPoint> SelectHost(DnsSrvServiceDescription service)
         {
-            if (WaitForSeverRecovery())
+            if (WaitForSeverRecovery() || service == null)
             {
                 return null;
             }
