@@ -37,59 +37,39 @@ namespace DnsSrvTool.Test
             ILookupClient dnsClient = new LookupClient();
             IDnsSrvQuerier querier = new DnsSrvQuerier(dnsClient); // extract sort elements !
             DnsSrvServiceDescription service = extract.FromUri(uri);
-            IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, cacheTime);
+            IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, cacheTime, retrieveTime);
             ITargetQuarantinePolicy quarantinePolice = new TargetQuarantinePolicyServeurUnavailable();
             var delegateHandler = new DnsServiceBalancingMessageHandler(service, selector, quarantinePolice);
         }
 
-        [Test]
-        public async Task LaunchASimpleRequest()
+        public HandlerWrapper wrapDnsHandler(DelegatingHandler dnsHandler, string successResponse)
         {
             FakeHTTPHandler handler = new FakeHTTPHandler();
-            handler.ReturnMessage = "responseSuccess";
+            handler.ReturnMessage = successResponse;
+            // add the fake handle
+            dnsHandler.InnerHandler = handler;
+            // wrapper used to send the chosen request
+            HandlerWrapper handlerWrapper = new HandlerWrapper();
+            handlerWrapper.InnerHandler = dnsHandler;
+            return handlerWrapper;
+        }
 
+        [Test]
+        public async Task LaunchASimpleRequestMustSuccess()
+        {
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, 20), new TargetQuarantinePolicyServeurUnavailable());
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, 20, 10), new TargetQuarantinePolicyServeurUnavailable());
+            using HandlerWrapper handlerWrapper = wrapDnsHandler(dnsHandler, "responseSuccess");
 
-            dnsHandler.InnerHandler = handler;
+            // create the request
             using var requestMessage = new HttpRequestMessage(new HttpMethod("Get"), "https://hello.world.com");
-            using HandlerWrapper handlerWrapper = new HandlerWrapper();
-            handlerWrapper.InnerHandler = dnsHandler;
+            // get the result
             var result = await handlerWrapper.Send(requestMessage, default(CancellationToken));
             var content = await result.Content.ReadAsStringAsync();
+
             Assert.AreEqual(content, "responseSuccess");
         }
-
-        public class FakeDnsSrvQuerier : IDnsSrvQuerier
-        {
-            public async Task<DnsSrvQueryResult> QueryService(DnsSrvServiceDescription service, int resultLifeTime)
-            {
-                var DnsSrvResultEntryList =  new List<DnsSrvResultEntry>()
-                {
-                    new DnsSrvResultEntry("api.qarnot1.com", 430, 4, 10, 20),
-                    new DnsSrvResultEntry("api.qarnot1.com", 430, 6, 10, 20),
-                    new DnsSrvResultEntry("api.qarnot1.com", 430, 1, 10, 20),
-                    new DnsSrvResultEntry("api.qarnot1.com", 430, 3, 10, 20),
-                    new DnsSrvResultEntry("api.qarnot1.com", 430, 2, 10, 20),
-                };
-                return new DnsSrvQueryResult(DnsSrvResultEntryList, resultLifeTime);
-            }
-        }
-
-        public class HandlerWrapper : DelegatingHandler
-        {
-            public async Task<HttpResponseMessage> Send(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                return await SendAsync(request, cancellationToken);
-            }
-
-            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                return await base.SendAsync(request, cancellationToken);
-            }
-        }
-
     }
 }

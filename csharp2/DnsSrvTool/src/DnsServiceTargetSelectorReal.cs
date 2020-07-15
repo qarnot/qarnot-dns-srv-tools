@@ -19,6 +19,7 @@ namespace DnsSrvTool
         private int ResultFailTtl { get; set; }
 
         private int ServerRecoveryTIme { get; set; }
+
         private DateTime ServerRecoveryTtl { get; set; }
 
         private SemaphoreSlim Semaphore;
@@ -28,11 +29,11 @@ namespace DnsSrvTool
             return ServerRecoveryTtl > DateTime.Now;
         }
 
-        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, int resultTtl)
+        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, int resultCacheTtlInSecond, int resultRecoveryTtlFromFailInSecond)
         {
             DnsQuerier = dnsQuerier;
-            ResultCacheTimeTtl = resultTtl;
-            ResultFailTtl = resultTtl;
+            ResultCacheTimeTtl = resultCacheTtlInSecond;
+            ResultFailTtl = resultRecoveryTtlFromFailInSecond;
             ServerRecoveryTtl = DateTime.Now;
             Semaphore = new SemaphoreSlim(0, 1);
         }
@@ -95,6 +96,7 @@ namespace DnsSrvTool
         // Most implementation (except mocks) will be stateful, a Reset() method will be handy.
         public void Reset()
         {
+            Semaphore.Release();
             ServerRecoveryTtl = DateTime.Now;
             QueryResult = null;
         }

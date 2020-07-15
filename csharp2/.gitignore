@@ -6,4 +6,5 @@ bin/
 obj/
 */obj/
 coverage
+*/coverage.json
 publish

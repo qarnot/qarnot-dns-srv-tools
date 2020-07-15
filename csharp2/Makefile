@@ -3,6 +3,9 @@ TEST_NAME=${NAME}.Test
 DOC_NAME=${NAME}.Document
 CSPROJ=${NAME}/${NAME}.csproj
 
+# BUILDER=Dotnet
+BUILDER=Msbuild
+
 all: restore build test
 
 restore:
@@ -10,11 +13,23 @@ restore:
 
 build:
 	@echo "\e[92mBuild project:\033[0m"
+ifeq ($(BUILDER), Dotnet)
 	dotnet build
+else ifeq ($(BUILDER), Msbuild)
+	msbuild
+else
+	dotnet build
+endif
 
 test:
 	@echo "\e[92mTest project Unit tests:\033[0m"
+ifeq ($(BUILDER), Dotnet)
 	dotnet test /p:CollectCoverage=true
+else ifeq ($(BUILDER), Msbuild)
+	(cd $(TEST_NAME) && dotnet test /p:CollectCoverage=true)
+else
+	dotnet test /p:CollectCoverage=true
+endif
 
 release:
 	dotnet --info
