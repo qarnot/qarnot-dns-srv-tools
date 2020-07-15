@@ -6,6 +6,9 @@ CSPROJ=${NAME}/${NAME}.csproj
 # BUILDER=Dotnet
 BUILDER=Msbuild
 
+COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage" --settings ${TEST_NAME}/coverlet.runsettings
+COVERAGE_DOTNET_OPTION=/p:CollectCoverage=true /p:Threshold=80 /p:CoverletOutput="./coverage/" /p:Include="[${NAME}.*]*" -nr:false -m:1
+
 all: restore build test
 
 restore:
@@ -21,15 +24,13 @@ else
 	dotnet build
 endif
 
+
+cov_test:
+	dotnet test ${TEST_NAME} $(COVERAGE_MSBUILD_OPTION) $(COVERAGE_DOTNET_OPTION)
+
 test:
 	@echo "\e[92mTest project Unit tests:\033[0m"
-ifeq ($(BUILDER), Dotnet)
-	dotnet test /p:CollectCoverage=true
-else ifeq ($(BUILDER), Msbuild)
-	(cd $(TEST_NAME) && dotnet test /p:CollectCoverage=true)
-else
-	dotnet test /p:CollectCoverage=true
-endif
+	dotnet test $(TEST_NAME)
 
 release:
 	dotnet --info
@@ -51,13 +52,15 @@ coverage: coverage-dotnet# run all tests and collect coverage
 
 coverage-dotnet:
 	@echo "\e[92mRunning Code Coverage:\033[0m"
-	dotnet test ${TEST_NAME} --collect:\"XPlat Code Coverage\" --settings coverlet.runsettings
+	dotnet test ${TEST_NAME} $(COVERAGE_MSBUILD_OPTION)
+	mv ${TEST_NAME}/TestResults/*/coverage.cobertura.xml ./coverage
 	@# see https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/VSTestIntegration.md
 
 coverage-msbuild:
 	@echo "\e[92mRunning Code Coverage:\033[0m"
-	dotnet test ${TEST_NAME} /p:CollectCoverage=true /p:Threshold=80 /p:CoverletOutput="./coverage/" /p:Include="[${NAME}.*]*" -nr:false -m:1
-	@echo "\e[92mYou Can find Code Coveage Results in coverage:\033[0m"
+	dotnet test ${TEST_NAME} $(COVERAGE_DOTNET_OPTION)
+	mv ${TEST_NAME}/coverage/coverage.json ./coverage
+	@echo "\e[92mYou Can find Code Coveage Results in ${TEST_NAME}/coverage:\033[0m"
 	@#see https://github.com/tonerdo/coverlet/blob/master/Documentation/MSBuildIntegration.md for improvement
 
 help:
