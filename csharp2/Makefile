@@ -1,4 +1,4 @@
-NAME="DnsSrvTool"
+NAME=DnsSrvTool
 TEST_NAME=${NAME}.Test
 DOC_NAME=${NAME}.Document
 CSPROJ=${NAME}/${NAME}.csproj
@@ -7,9 +7,9 @@ CSPROJ=${NAME}/${NAME}.csproj
 BUILDER=Msbuild
 
 COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage" --settings ${TEST_NAME}/coverlet.runsettings
-COVERAGE_DOTNET_OPTION=/p:CollectCoverage=true /p:Threshold=80 /p:CoverletOutput="./coverage/" /p:Include="[${NAME}.*]*" -nr:false -m:1
+COVERAGE_DOTNET_OPTION=/p:CollectCoverage=true /p:CoverletOutput="./coverage/" -nr:false -m:1 /p:Threshold=80 /p:Include="${TEST_NAME}/*"
 
-all: restore build test
+all: restore build cov_test
 
 restore:
 	dotnet restore
@@ -25,8 +25,8 @@ else
 endif
 
 
-cov_test:
-	dotnet test ${TEST_NAME} $(COVERAGE_MSBUILD_OPTION) $(COVERAGE_DOTNET_OPTION)
+cov_test: build
+	dotnet test $(TEST_NAME) $(COVERAGE_MSBUILD_OPTION) $(COVERAGE_DOTNET_OPTION)
 
 test:
 	@echo "\e[92mTest project Unit tests:\033[0m"
@@ -51,15 +51,16 @@ document:
 coverage: coverage-dotnet# run all tests and collect coverage
 
 coverage-dotnet:
-	@echo "\e[92mRunning Code Coverage:\033[0m"
+	@echo "\e[92mRunning Dotnet Code Coverage:\033[0m"
+	-rm ${TEST_NAME}/TestResults/*/coverage.cobertura.xml
 	dotnet test ${TEST_NAME} $(COVERAGE_MSBUILD_OPTION)
-	mv ${TEST_NAME}/TestResults/*/coverage.cobertura.xml ./coverage
+	cp ${TEST_NAME}/TestResults/*/coverage.cobertura.xml ./coverage
 	@# see https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/VSTestIntegration.md
 
 coverage-msbuild:
-	@echo "\e[92mRunning Code Coverage:\033[0m"
+	@echo "\e[92mRunning Msbuild Code Coverage:\033[0m"
 	dotnet test ${TEST_NAME} $(COVERAGE_DOTNET_OPTION)
-	mv ${TEST_NAME}/coverage/coverage.json ./coverage
+	cp ${TEST_NAME}/coverage/coverage.json ./coverage
 	@echo "\e[92mYou Can find Code Coveage Results in ${TEST_NAME}/coverage:\033[0m"
 	@#see https://github.com/tonerdo/coverlet/blob/master/Documentation/MSBuildIntegration.md for improvement
 

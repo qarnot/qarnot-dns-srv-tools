@@ -11,7 +11,6 @@ namespace DnsSrvTool
         private DnsSrvServiceDescription ServiceDescription { get; }
         private IDnsServiceTargetSelector TargetSelector { get; }
         private ITargetQuarantinePolicy QuarantinePolicy { get; }
-        private TimeSpan BlackListTime { get; } // TODO: set it
 
         public DnsServiceBalancingMessageHandler(
             DnsSrvServiceDescription serviceDescription,
@@ -47,6 +46,7 @@ namespace DnsSrvTool
         /// <returns>The Http response.</returns>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            var originalUri = request.RequestUri;
             while (true)
             {
                 DnsEndPoint host = await TargetSelector.SelectHost(ServiceDescription);
@@ -54,7 +54,12 @@ namespace DnsSrvTool
                 var response = await base.SendAsync(request, cancellationToken);
                 if (host != null && QuarantinePolicy.ShouldQuarantine(response))
                 {
-                    TargetSelector.BlacklistHostFor(host, BlackListTime);
+                    TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
+                }
+                else if (host == null && originalUri != request.RequestUri)
+                {
+                    request.RequestUri = originalUri;
+                    return await base.SendAsync(request, cancellationToken);
                 }
                 else
                 {

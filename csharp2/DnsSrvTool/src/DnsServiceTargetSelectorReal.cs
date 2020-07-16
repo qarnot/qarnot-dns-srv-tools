@@ -12,29 +12,30 @@ namespace DnsSrvTool
     {
         private IDnsSrvQuerier DnsQuerier { get; }
 
+        private IDnsSrvSortResult DnsSortResult { get; }
+
         private DnsSrvQueryResult QueryResult { get; set; }
 
         private int ResultCacheTimeTtl { get; set; }
 
-        private int ResultFailTtl { get; set; }
+        private int ServerRecoveryUnavailableTime { get; set; }
 
-        private int ServerRecoveryTIme { get; set; }
-
-        private DateTime ServerRecoveryTtl { get; set; }
+        private DateTime ServerRecoveryPeriod { get; set; }
 
         private SemaphoreSlim Semaphore;
 
         private bool WaitForSeverRecovery()
         {
-            return ServerRecoveryTtl > DateTime.Now;
+            return ServerRecoveryPeriod > DateTime.Now;
         }
 
-        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, int resultCacheTtlInSecond, int resultRecoveryTtlFromFailInSecond)
+        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, int resultCacheTtlInSecond, int resultRecoveryTtlFromFailInSecond)
         {
             DnsQuerier = dnsQuerier;
+            DnsSortResult = dnsSortResult;
             ResultCacheTimeTtl = resultCacheTtlInSecond;
-            ResultFailTtl = resultRecoveryTtlFromFailInSecond;
-            ServerRecoveryTtl = DateTime.Now;
+            ServerRecoveryUnavailableTime = resultRecoveryTtlFromFailInSecond; // extract to the class?
+            ServerRecoveryPeriod = DateTime.Now;
             Semaphore = new SemaphoreSlim(0, 1);
         }
 
@@ -49,6 +50,7 @@ namespace DnsSrvTool
             if (ShouldRetrieveResult())
             {
                 QueryResult = await DnsQuerier.QueryService(service, ResultCacheTimeTtl);
+                QueryResult = DnsSortResult.Sort(QueryResult);
             }
         }
 
@@ -68,7 +70,7 @@ namespace DnsSrvTool
 
             if (entryFound == null)
             {
-                ServerRecoveryTtl = DateTime.Now.AddSeconds(ResultFailTtl);
+                ServerRecoveryPeriod = DateTime.Now.AddSeconds(ServerRecoveryUnavailableTime);
                 return null;
             }
 
@@ -82,6 +84,9 @@ namespace DnsSrvTool
             {
                 if (entry.HostName == dnsHost.Host && entry.Port == dnsHost.Port)
                 {
+                    Console.Write(entry.HostName);
+                    Console.Write("  : ");
+                    Console.WriteLine(duration);
                     entry.PutInQuarantine(duration);
                 }
             });
@@ -97,7 +102,7 @@ namespace DnsSrvTool
         public void Reset()
         {
             Semaphore.Release();
-            ServerRecoveryTtl = DateTime.Now;
+            ServerRecoveryPeriod = DateTime.Now;
             QueryResult = null;
         }
 

@@ -12,6 +12,7 @@ namespace DnsSrvTool.Test
 
     public class FakeHTTPHandler : HttpClientHandler
     {
+        public Uri UrlCall { get; private set; } = null;
         private int ReturnMessageListIndex = 0;
         private int ReturnStatusCodeListIndex = 0;
 
@@ -39,18 +40,17 @@ namespace DnsSrvTool.Test
         {
             var response = await Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)).ConfigureAwait(false);
             var message = string.Empty;
-            var uriCall = request?.RequestUri?.ToString();
-            Console.WriteLine(uriCall);
+            UrlCall = request?.RequestUri;
 
-            // if (ReturnStatusCodeList != null && ReturnStatusCodeList.Count > 0)
-            // {
-            //     response.StatusCode = ReturnStatusCodeList[ReturnStatusCodeListIndex % ReturnStatusCodeList.Count];
-            //     ReturnStatusCodeListIndex += 1;
-            // }
-
-            if (ReturnMessageDictionary != null && ReturnMessageDictionary.ContainsKey(uriCall))
+            if (ReturnStatusCodeList != null && ReturnStatusCodeList.Count > 0)
             {
-                message = ReturnMessageDictionary[uriCall];
+                response.StatusCode = ReturnStatusCodeList[ReturnStatusCodeListIndex % ReturnStatusCodeList.Count];
+                ReturnStatusCodeListIndex += 1;
+            }
+
+            if (ReturnMessageDictionary != null && ReturnMessageDictionary.ContainsKey(UrlCall?.ToString()))
+            {
+                message = ReturnMessageDictionary[UrlCall?.ToString()];
             }
             else if (ReturnMessageList != null && ReturnMessageList.Count > 0)
             {

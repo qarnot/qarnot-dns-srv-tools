@@ -39,7 +39,7 @@ namespace DnsSrvTool.Test
         [Test]
         public void TestDifferentFromUri()
         {
-            var selector = new DnsServiceTargetSelectorReal(null, 0, 0);
+            var selector = new DnsServiceTargetSelectorReal(null, null, 0, 0);
         }
     }
 }
