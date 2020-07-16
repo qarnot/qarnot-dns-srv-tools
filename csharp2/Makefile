@@ -6,7 +6,7 @@ CSPROJ=${NAME}/${NAME}.csproj
 # BUILDER=Dotnet
 BUILDER=Msbuild
 
-COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage" --settings ${TEST_NAME}/coverlet.runsettings
+COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage" #--settings ${TEST_NAME}/coverlet.runsettings
 COVERAGE_DOTNET_OPTION=/p:CollectCoverage=true /p:CoverletOutput="./coverage/" -nr:false -m:1 /p:Threshold=80 /p:Include="${TEST_NAME}/*"
 
 all: restore build cov_test
@@ -25,7 +25,7 @@ else
 endif
 
 
-cov_test: build
+cov_test:
 	dotnet test $(TEST_NAME) $(COVERAGE_MSBUILD_OPTION) $(COVERAGE_DOTNET_OPTION)
 
 test:

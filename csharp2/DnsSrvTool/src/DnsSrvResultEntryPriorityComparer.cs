@@ -3,6 +3,7 @@ namespace DnsSrvTool
     using System.Collections.Generic;
     using DnsClient;
 
+#pragma warning disable CA1054, SA1611, CS1591
     /// <summary>
     /// IComparer function to sort the DnsSrvResultEntry by priority.
     /// </summary>

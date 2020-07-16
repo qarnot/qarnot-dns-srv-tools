@@ -4,6 +4,7 @@ namespace DnsSrvTool
     using System.Collections.Generic;
     using System.Linq;
 
+#pragma warning disable CA1054, SA1611, CS1591
     // Making requests, this is pure mechanism
     public class DnsSrvSortResult : IDnsSrvSortResult
     {
@@ -83,7 +84,7 @@ namespace DnsSrvTool
         /// <summary>
         /// Return a list sort by priority them randomely using the by weight.
         /// </summary>
-        /// <param name="source">ServiceHostEntries.</param>
+        /// <param name="serviceList">DnsSrv Result Entities.</param>
         /// <returns>Sorted ServiceHostEntries.</returns>
         protected IEnumerable<DnsSrvResultEntry> BalanceSortServiceList(IEnumerable<DnsSrvResultEntry> serviceList)
         {
@@ -93,6 +94,11 @@ namespace DnsSrvTool
 
         public DnsSrvQueryResult Sort(DnsSrvQueryResult result)
         {
+            if (result?.DnsEntries == null || result.DnsEntries.Count == 0)
+            {
+                return result;
+            }
+
             var sortEntries = BalanceSortServiceList(result.DnsEntries);
             result.DnsEntries.Clear();
             result.DnsEntries.AddRange(sortEntries);

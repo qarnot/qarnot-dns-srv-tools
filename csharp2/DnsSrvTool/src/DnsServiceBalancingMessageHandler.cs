@@ -1,25 +1,32 @@
 namespace DnsSrvTool
 {
     using System;
+    using Microsoft.Extensions.Logging;
     using System.Net;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
     using DnsClient;
+
+#pragma warning disable CA1054, SA1611, CS1591
+
     public class DnsServiceBalancingMessageHandler : DelegatingHandler
     {
         private DnsSrvServiceDescription ServiceDescription { get; }
         private IDnsServiceTargetSelector TargetSelector { get; }
         private ITargetQuarantinePolicy QuarantinePolicy { get; }
+        private ILogger Logger { get; }
 
         public DnsServiceBalancingMessageHandler(
             DnsSrvServiceDescription serviceDescription,
             IDnsServiceTargetSelector targetSelector,
-            ITargetQuarantinePolicy quarantinePolicy)
+            ITargetQuarantinePolicy quarantinePolicy,
+            ILogger logger)
         {
             ServiceDescription = serviceDescription;
             TargetSelector = targetSelector;
             QuarantinePolicy = quarantinePolicy;
+            Logger = logger;
         }
 
         private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
@@ -40,32 +47,30 @@ namespace DnsSrvTool
 
         /// <summary>
         /// SendAsync override method.
+        /// Recursive call
         /// </summary>
         /// <param name="request">The request given.</param>
         /// <param name="cancellationToken">The cancelation token.</param>
         /// <returns>The Http response.</returns>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var originalUri = request.RequestUri;
-            while (true)
+            Uri originalUri = request.RequestUri;
+            DnsEndPoint host = await TargetSelector.SelectHostAsync(ServiceDescription);
+            if (host == null)
             {
-                DnsEndPoint host = await TargetSelector.SelectHost(ServiceDescription);
-                request.RequestUri = ReplaceHost(request.RequestUri, host);
-                var response = await base.SendAsync(request, cancellationToken);
-                if (host != null && QuarantinePolicy.ShouldQuarantine(response))
-                {
-                    TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
-                }
-                else if (host == null && originalUri != request.RequestUri)
-                {
-                    request.RequestUri = originalUri;
-                    return await base.SendAsync(request, cancellationToken);
-                }
-                else
-                {
-                    return response;
-                }
+                return await base.SendAsync(request, cancellationToken);
             }
+
+            request.RequestUri = ReplaceHost(request.RequestUri, host);
+            var response = await base.SendAsync(request, cancellationToken);
+            if (QuarantinePolicy.ShouldQuarantine(response))
+            {
+                TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
+                request.RequestUri = originalUri;
+                return await SendAsync(request, cancellationToken);
+            }
+
+            return response;
         }
     }
 }

@@ -3,6 +3,7 @@ namespace DnsSrvTool
     using System;
     using System.Net.Http;
 
+#pragma warning disable CA1054, SA1611, CS1591
     public class TargetQuarantinePolicyServeurUnavailable : ITargetQuarantinePolicy
     {
         public TimeSpan QuarantineDuration { get; }

@@ -19,10 +19,10 @@ namespace DnsSrvTool.Test
         public void AllStatusCodeEnums(System.Net.HttpStatusCode statusCodeToTest)
         {
             var targetQuarantine = new TargetQuarantinePolicyServeurUnavailable();
-            HttpResponseMessage response = new HttpResponseMessage();
+            using HttpResponseMessage response = new HttpResponseMessage();
             bool shouldQuarantaine = false;
             response.StatusCode = statusCodeToTest;
-            if( statusCodeToTest == System.Net.HttpStatusCode.InternalServerError
+            if (statusCodeToTest == System.Net.HttpStatusCode.InternalServerError
                || statusCodeToTest == System.Net.HttpStatusCode.BadGateway
                || statusCodeToTest == System.Net.HttpStatusCode.GatewayTimeout
                || statusCodeToTest == System.Net.HttpStatusCode.ServiceUnavailable)

@@ -5,11 +5,12 @@ namespace DnsSrvTool
     using System.Threading;
     using System.Threading.Tasks;
 
+#pragma warning disable CA1054, SA1611, CS1591
     // Deciding which host to use. As an interface for DI, to be able to mock
     // it to test upper layers.
     public interface IDnsServiceTargetSelector
     {
-        Task<DnsEndPoint> SelectHost(DnsSrvServiceDescription service);
+        Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service);
 
         // Blacklist a host for some time. No questions asked.
         void BlacklistHostFor(DnsEndPoint host, TimeSpan duration);

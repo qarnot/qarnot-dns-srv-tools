@@ -5,6 +5,8 @@ namespace DnsSrvTool
     using System.Linq;
     using System.Net.Sockets;
 
+#pragma warning disable CA1054, SA1611, CS1591
+
     public class DnsServiceExtractorFirstLabelConvention : IDnsServiceExtractor
     {
         public const ProtocolType DEFAULT_PROTOCOL = ProtocolType.Tcp;
@@ -31,9 +33,9 @@ namespace DnsSrvTool
             }
 
             var dnsSrvServiceDescription = new DnsSrvServiceDescription(
-                serviceName:serviceName,
-                protocol:Protocol,
-                domain:domain);
+                serviceName: serviceName,
+                protocol: Protocol,
+                domain: domain);
 
             return dnsSrvServiceDescription;
         }

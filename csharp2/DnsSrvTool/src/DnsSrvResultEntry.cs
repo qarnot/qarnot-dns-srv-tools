@@ -2,6 +2,8 @@ namespace DnsSrvTool
 {
     using System;
     using System.Net;
+
+#pragma warning disable CA1054, SA1611, CS1591
     public class DnsSrvResultEntry
     {
         public string HostName { get; }
@@ -11,7 +13,7 @@ namespace DnsSrvTool
         public int Weight { get; }
         public DateTime CreationTime { get; }
         public DateTime TtlEndTime { get; }
-        public DateTime QuarantineTime { get; private set; }
+        public DateTime QuarantineUntilTime { get; private set; }
 
         public DnsSrvResultEntry(string hostName, int port, int priority, int weight, int timeToLiveInSec)
         {
@@ -20,34 +22,25 @@ namespace DnsSrvTool
             Priority = priority;
             Weight = weight;
             TimeToLiveInSec = timeToLiveInSec;
-            CreationTime = DateTime.Now;
-            TtlEndTime = DateTime.Now.AddSeconds(TimeToLiveInSec);
-            QuarantineTime = DateTime.Now;
+            CreationTime = DateTime.UtcNow;
+            TtlEndTime = DateTime.UtcNow.AddSeconds(TimeToLiveInSec);
+            QuarantineUntilTime = DateTime.UtcNow;
         }
 
-        public bool IsAlive()
-        {
-            return TtlEndTime > DateTime.Now;
-        }
+        public bool IsAlive => TtlEndTime > DateTime.UtcNow;
 
-        public bool IsAvailable()
-        {
-            return QuarantineTime <= DateTime.Now && IsAlive();
-        }
+        public bool IsAvailable => QuarantineUntilTime <= DateTime.UtcNow && IsAlive;
 
         public void ResetQuarantine()
         {
-            QuarantineTime = DateTime.Now;
+            QuarantineUntilTime = DateTime.UtcNow;
         }
 
         public void PutInQuarantine(TimeSpan quarnatineDuration)
         {
-            QuarantineTime = DateTime.Now.Add(quarnatineDuration);
+            QuarantineUntilTime = DateTime.UtcNow.Add(quarnatineDuration);
         }
 
-        public DnsEndPoint DnsEndPoint()
-        {
-            return new DnsEndPoint(HostName, Port);
-        }
+        public DnsEndPoint DnsEndPoint => new DnsEndPoint(HostName, Port);
     }
 }

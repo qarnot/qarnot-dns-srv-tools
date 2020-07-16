@@ -12,8 +12,8 @@ namespace DnsSrvTool.Test
 
     public class FakeHTTPHandler : HttpClientHandler
     {
-        public Uri UrlCall { get; private set; } = null;
         private int ReturnMessageListIndex = 0;
+
         private int ReturnStatusCodeListIndex = 0;
 
         public FakeHTTPHandler()
@@ -24,9 +24,12 @@ namespace DnsSrvTool.Test
             ReturnStatusCodeList = null;
         }
 
+        public Uri UrlCall { get; private set; } = null;
+
         public string ReturnMessage { get; set; } = "{\"Your\":\"response\"}";
 
         public List<System.Net.HttpStatusCode> ReturnStatusCodeList { get; set; }
+
         public List<string> ReturnMessageList { get; set; }
 
         /// <summary>

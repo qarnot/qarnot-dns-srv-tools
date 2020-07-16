@@ -7,7 +7,9 @@ namespace DnsSrvTool
     using System.Threading;
     using System.Threading.Tasks;
     using DnsClient;
+    using DnsClient.Protocol;
 
+#pragma warning disable CA1054, SA1611, CS1591
     public class DnsSrvQuerier: IDnsSrvQuerier
     {
         private ILookupClient LookupClient { get; }
@@ -17,11 +19,43 @@ namespace DnsSrvTool
             LookupClient = lookupClient;
         }
 
-        public async Task<DnsSrvQueryResult> QueryService(DnsSrvServiceDescription service, int resultLifeTime)
+        internal List<DnsSrvResultEntry> ResolveServiceProcessResult(IDnsQueryResponse result)
         {
-            var dnsServicesHost = await LookupClient.ResolveServiceAsync(service.Domain, service.ServiceName, service.Protocol);
-            var queryResult = dnsServicesHost.Select(serviceHost => new DnsSrvResultEntry(serviceHost.HostName, serviceHost.Port, serviceHost.Priority, serviceHost.Weight, resultLifeTime)).ToList();
-            return new DnsSrvQueryResult(queryResult, resultLifeTime);
+            // https://github.com/MichaCo/DnsClient.NET/blob/dev/src/DnsClient/DnsQueryExtensions.cs/#L628
+            var hosts = new List<DnsSrvResultEntry>();
+            if (result == null || result.HasError)
+            {
+                return hosts;
+            }
+
+            foreach (var entry in result.Answers.SrvRecords())
+            {
+                var timeToLive = entry.TimeToLive;
+                var hostName = result.Additionals
+                    .OfType<CNameRecord>()
+                    .Where(p => p.DomainName.Equals(entry.Target))
+                    .Select(p => p.CanonicalName).FirstOrDefault()
+                    ?? entry.Target;
+
+                hosts.Add(
+                    new DnsSrvResultEntry(hostName, entry.Port,entry.Priority, entry.Weight, timeToLive)
+                );
+            }
+
+            return hosts;
+        }
+
+        internal string CreateDnsQueryString(DnsSrvServiceDescription service)
+        {
+            return $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
+        }
+
+        public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
+        {
+            string queryString = CreateDnsQueryString(service);
+            var result = await LookupClient.QueryAsync(queryString, QueryType.SRV).ConfigureAwait(false);
+            var queryResult = ResolveServiceProcessResult(result);
+            return new DnsSrvQueryResult(queryResult);
         }
     }
 }

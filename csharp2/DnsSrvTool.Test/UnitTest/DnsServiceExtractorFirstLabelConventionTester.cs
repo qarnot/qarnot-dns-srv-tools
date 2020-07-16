@@ -38,11 +38,11 @@ namespace DnsSrvTool.Test
         [TestCase("https://api.qarnot.retribution.fr", "api", "qarnot.retribution.fr", true)]
         [TestCase("https://api.test.random.domain.with.test.com", "api", "test.random.domain.with.test.com", false)]
         [Test]
-        public async Task TestDifferentFromUriWithServiceAndDomainWhiteList(string url, string service, string domain, bool isTrue)
+        public void TestDifferentFromUriWithServiceAndDomainWhiteList(string url, string service, string domain, bool isTrue)
         {
             Uri uri = new Uri(url);
-            var serviceWhiteList = new List<string>(){ "api", "test" };
-            var domainWhiteList = new List<string>(){ "qarnot.com", "dev.qarnot.com", "qarnot.retribution.fr" };
+            var serviceWhiteList = new List<string>() { "api", "test" };
+            var domainWhiteList = new List<string>() { "qarnot.com", "dev.qarnot.com", "qarnot.retribution.fr" };
             IDnsServiceExtractor extractor = new DnsServiceExtractorFirstLabelConvention(null, serviceWhiteList, domainWhiteList);
             DnsSrvServiceDescription description = extractor.FromUri(uri);
             if (isTrue)
@@ -65,7 +65,7 @@ namespace DnsSrvTool.Test
         [TestCase(ProtocolType.Ggp)]
         [TestCase(ProtocolType.IPv6)]
         [Test]
-        public async Task TestDifferentFromUriWithServiceAndDomainWhiteList(ProtocolType protocol)
+        public void TestDifferentFromUriWithServiceAndDomainWhiteList(ProtocolType protocol)
         {
             IDnsServiceExtractor extractor = new DnsServiceExtractorFirstLabelConvention(protocol);
             DnsSrvServiceDescription description = extractor.FromUri(new Uri("https://api.qarnot.com"));
