@@ -13,16 +13,19 @@ namespace DnsSrvTool.Test
     public class FakeHTTPHandler : HttpClientHandler
     {
         private int ReturnMessageListIndex = 0;
+        private int ReturnStatusCodeListIndex = 0;
 
         public FakeHTTPHandler()
             : base()
         {
             ReturnMessageList = null;
             ReturnMessageDictionary = null;
+            ReturnStatusCodeList = null;
         }
 
         public string ReturnMessage { get; set; } = "{\"Your\":\"response\"}";
 
+        public List<System.Net.HttpStatusCode> ReturnStatusCodeList { get; set; }
         public List<string> ReturnMessageList { get; set; }
 
         /// <summary>
@@ -38,6 +41,13 @@ namespace DnsSrvTool.Test
             var message = string.Empty;
             var uriCall = request?.RequestUri?.ToString();
             Console.WriteLine(uriCall);
+
+            // if (ReturnStatusCodeList != null && ReturnStatusCodeList.Count > 0)
+            // {
+            //     response.StatusCode = ReturnStatusCodeList[ReturnStatusCodeListIndex % ReturnStatusCodeList.Count];
+            //     ReturnStatusCodeListIndex += 1;
+            // }
+
             if (ReturnMessageDictionary != null && ReturnMessageDictionary.ContainsKey(uriCall))
             {
                 message = ReturnMessageDictionary[uriCall];
