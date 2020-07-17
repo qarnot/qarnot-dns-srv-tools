@@ -29,11 +29,6 @@ namespace DnsSrvTool
 
         private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
         {
-            if (newHost == null)
-            {
-                return original;
-            }
-
             Logger?.LogInformation($"ReplaceHost: OldHost: {original.Host}:{original.Port} NewHost: {newHost.Host}:{newHost.Port}");
             var builder = new UriBuilder(original)
             {

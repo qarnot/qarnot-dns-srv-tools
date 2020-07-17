@@ -16,20 +16,9 @@ namespace DnsSrvTool.Test
     [TestFixture]
     public class DnsSrvToolsIntergrationTest
     {
-        [SetUp]
-        public void SetUp()
-        {
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-        }
-
         [Test]
         public void CreateABuildCheckTypeValues()
         {
-            uint cacheTime = 20;
             uint retrieveTime = 20;
             ProtocolType protocol = ProtocolType.Tcp;
             string uriString = "https://api.qarnot.com";
@@ -38,7 +27,7 @@ namespace DnsSrvTool.Test
             ILookupClient dnsClient = new LookupClient();
             IDnsSrvQuerier querier = new DnsSrvQuerier(dnsClient); // extract sort elements !
             DnsSrvServiceDescription service = extract.FromUri(uri);
-            IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), cacheTime, retrieveTime);
+            IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), retrieveTime);
             ITargetQuarantinePolicy quarantinePolice = new TargetQuarantinePolicyServeurUnavailable();
             using var delegateHandler = new DnsServiceBalancingMessageHandler(service, selector, quarantinePolice, null);
         }
@@ -65,11 +54,11 @@ namespace DnsSrvTool.Test
         [Test]
         public async Task LaunchASimpleRequestMustSuccess()
         {
-            var logger = CreateILoggerFromNLog();
+            var logger = CreateLoggers.CreateILoggerFromNLog();
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(), logger);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), logger);
             using HandlerWrapper handlerWrapper = WrapDnsHandler(dnsHandler, "responseSuccess");
 
             // create the request
@@ -92,7 +81,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -123,7 +112,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -145,7 +134,7 @@ namespace DnsSrvTool.Test
         [Test]
         public async Task LaunchErrorUseTheOriginalUriIfNoDnsServerWork()
         {
-            var logger = CreateILoggerFromNLog();
+            var logger = CreateLoggers.CreateILoggerFromNLog();
             FakeHTTPHandler handler = new FakeHTTPHandler();
             handler.ReturnMessage = "responseSuccess";
             handler.ReturnStatusCodeList = new List<HttpStatusCode>() { HttpStatusCode.InternalServerError };
@@ -153,7 +142,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10, logger), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), logger);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10, logger), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), logger);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -192,7 +181,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -227,35 +216,6 @@ namespace DnsSrvTool.Test
             Assert.AreEqual("responseSuccess", content);
             Assert.AreEqual(result.StatusCode, HttpStatusCode.Accepted);
             Assert.AreEqual(querier.DnsSrvResultEntryList[0].HostName, handler.UrlCall.Host);
-        }
-
-        private Microsoft.Extensions.Logging.ILogger CreateILoggerFromNLog(bool debug = false)
-        {
-            // Example of NLog build
-            // https://stackoverflow.com/questions/56534730/nlog-works-in-asp-net-core-app-but-not-in-net-core-xunit-test-project
-            // NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
-            var configuration = new NLog.Config.LoggingConfiguration();
-            configuration.AddRuleForAllLevels(new NLog.Targets.ConsoleTarget());
-            NLog.Web.NLogBuilder.ConfigureNLog(configuration);
-
-            // Create provider to bridge Microsoft.Extensions.Logging
-            var provider = new NLog.Extensions.Logging.NLogLoggerProvider();
-
-            // Create logger
-            Microsoft.Extensions.Logging.ILogger logger = provider.CreateLogger(typeof(DnsSrvToolsIntergrationTest).FullName);
-
-            // ILogger logger = NLog.LogManager.GetCurrentClassLogger();
-            if (debug)
-            {
-                logger.LogDebug("This is a test of the log system : LogDebug.");
-                logger.LogTrace("This is a test of the log system : LogTrace.");
-                logger.LogInformation("This is a test of the log system : LogInformation.");
-                logger.LogWarning("This is a test of the log system : LogWarning.");
-                logger.LogError("This is a test of the log system : LogError.");
-                logger.LogCritical("This is a test of the log system : LogCritical.");
-            }
-
-            return logger;
         }
     }
 }

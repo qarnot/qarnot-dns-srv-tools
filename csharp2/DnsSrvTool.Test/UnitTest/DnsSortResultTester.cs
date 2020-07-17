@@ -21,6 +21,22 @@ namespace DnsSrvTool.Test
         }
 
         [Test]
+        public void TestEntityFullString()
+        {
+            var entry = new DnsSrvResultEntry("hostname", 430, 4, 10, 42);
+            Assert.IsTrue(entry.ToFullString().Contains("HostName: hostname Port: 430 Priority: 4 Weight: 10 TimeToLiveInSec: 42 CreationTime: "));
+        }
+
+        [Test]
+        public void TestResultIsAlive()
+        {
+            var result = new DnsSrvQueryResult(new List<DnsSrvResultEntry>());
+            var result2 = new DnsSrvQueryResult(new List<DnsSrvResultEntry>() { new DnsSrvResultEntry("hostname", 430, 4, 10, 42) });
+            Assert.IsTrue(result.IsAlive);
+            Assert.IsTrue(result2.IsAlive);
+        }
+
+        [Test]
         public void CheckSortByPriority()
         {
             var source = new List<DnsSrvResultEntry>()
@@ -49,7 +65,7 @@ namespace DnsSrvTool.Test
                 new DnsSrvResultEntry("hostname", 430, 1, 50, 42),
                 new DnsSrvResultEntry("hostname", 430, 1, 20, 42),
             };
-            var numTest = 100;
+            var numTest = 300;
             var count = new int[4] { 0, 0, 0, 0 };
             for (int i = 0; i < 81 * numTest; i++)
             {
@@ -95,7 +111,7 @@ namespace DnsSrvTool.Test
                 new DnsSrvResultEntry("hostname", 430, 2, 50, 42),
                 new DnsSrvResultEntry("hostname", 430, 2, 20, 42),
             };
-            var numTest = 100;
+            var numTest = 300;
             var count = new int[4] { 0, 0, 0, 0 };
             for (int i = 0; i < 81 * numTest; i++)
             {

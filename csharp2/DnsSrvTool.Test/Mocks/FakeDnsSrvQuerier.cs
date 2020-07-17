@@ -2,6 +2,7 @@ namespace DnsSrvTool.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
@@ -21,7 +22,7 @@ namespace DnsSrvTool.Test
 
         public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
         {
-            return await Task.FromResult(new DnsSrvQueryResult(DnsSrvResultEntryList));
+            return await Task.FromResult(new DnsSrvQueryResult(DnsSrvResultEntryList.Select(entity => new DnsSrvResultEntry(entity.HostName, entity.Port, entity.Priority, entity.Weight, entity.TimeToLiveInSec)).ToList()));
         }
     }
 

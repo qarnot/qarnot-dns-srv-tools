@@ -16,8 +16,6 @@ namespace DnsSrvTool
 
         private DnsSrvQueryResult QueryResult { get; set; }
 
-        private uint ResultCacheTimeTtl { get; }
-
         private uint ServerRecoveryUnavailableTime { get; }
 
         private Semaphore SemaphoreKey;
@@ -26,11 +24,10 @@ namespace DnsSrvTool
 
         private DnsSrvServiceDescription LastService;
 
-        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint resultCacheTtlInSecond, uint serverRecoveryUnavailableTime, ILogger logger = null)
+        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint serverRecoveryUnavailableTime, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
             DnsSortResult = dnsSortResult;
-            ResultCacheTimeTtl = resultCacheTtlInSecond;
             ServerRecoveryUnavailableTime = serverRecoveryUnavailableTime;
             SemaphoreKey = new Semaphore(1, 1);
             Logger = logger;
@@ -40,39 +37,35 @@ namespace DnsSrvTool
 
         private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
         {
-            SemaphoreKey.WaitOne();
-            try
+            if (ShouldRetrieveResult)
             {
-                if (service == LastService || ShouldRetrieveResult)
-                {
-                    Logger?.LogTrace($"Call the Dns Srv server");
-                    QueryResult = await DnsQuerier.QueryServiceAsync(service);
-                    DnsSortResult.Sort(QueryResult);
-                    LastService = service;
-                }
-            }
-            finally
-            {
-                SemaphoreKey.Release();
+                Logger?.LogTrace($"Call the Dns Srv server");
+                QueryResult = await DnsQuerier.QueryServiceAsync(service);
+                DnsSortResult.Sort(QueryResult);
+                LastService = service;
             }
         }
 
-        public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
+        internal void CheckService(DnsSrvServiceDescription service)
         {
             if (service == null)
             {
                 Logger?.LogDebug($"DnsSrvServiceDescription service null found");
                 throw new ArgumentNullException("service cannot be null");
             }
+        }
 
-            if (ShouldRetrieveResult)
-            {
-                await RetrieveQueryResultFromDnsAsync(service);
-            }
-
+        public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
+        {
             SemaphoreKey.WaitOne();
             try
             {
+                CheckService(service);
+                if (!service.Equals(LastService) || ShouldRetrieveResult)
+                {
+                    await RetrieveQueryResultFromDnsAsync(service);
+                }
+
                 DnsSrvResultEntry entryFound = QueryResult?.DnsEntries?.FirstOrDefault(entry => entry.IsAvailable);
 
                 if (entryFound != null)
@@ -145,6 +138,7 @@ namespace DnsSrvTool
             {
                 Logger?.LogTrace($"Reset of DnsServiceTargetSelectorReal");
                 QueryResult = null;
+                LastService = null;
             }
             finally
             {

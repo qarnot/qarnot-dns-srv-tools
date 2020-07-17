@@ -14,16 +14,6 @@ namespace DnsSrvTool.Test
     [TestFixture]
     public class DnsServiceTargetSelectorRealTester
     {
-        [SetUp]
-        public void SetUp()
-        {
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-        }
-
         // test semaphore ***************
         // test blacklist something *****
         // test thing is blacklist ******
@@ -38,23 +28,66 @@ namespace DnsSrvTool.Test
         [Test]
         public void NullServiceThrowException()
         {
-            var selector = new DnsServiceTargetSelectorReal(null, null, 0, 0);
+            var selector = new DnsServiceTargetSelectorReal(null, null, 0, null);
             var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await selector.SelectHostAsync(null));
+            selector = new DnsServiceTargetSelectorReal(null, null, 0, CreateLoggers.CreateILoggerFromNLog());
+            ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await selector.SelectHostAsync(null));
             Assert.IsNotNull(ex);
         }
 
         [Test]
         public async Task ShouldNotFailWhenQueryServerReturnNoElement()
         {
-            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerierEmpty(), new DnsSrvSortResult(), 10, 10);
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerierEmpty(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNull(ret);
         }
 
         [Test]
+        public async Task BlacklistForShouldThrowExceptionIfNullValue()
+        {
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
+            var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            var ex = Assert.Throws<ArgumentNullException>(() => selector.BlacklistHostFor(null, new TimeSpan(1, 1, 1)));
+            Assert.IsNotNull(ex);
+        }
+
+        [Test]
+        public async Task BlacklistForShouldNotFail()
+        {
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
+            var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            selector.BlacklistHostFor(ret1, new TimeSpan(1, 1, 1));
+            var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            Assert.AreNotEqual(ret1, ret2);
+        }
+
+        [Test]
         public async Task ResetBlacklistForHostShouldNotFail()
         {
-            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, 10);
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
+            var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            selector.BlacklistHostFor(ret1, new TimeSpan(1, 1, 1));
+            var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            selector.ResetBlacklistForHost(ret1);
+            var ret3 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            Assert.AreNotEqual(ret1, ret2);
+            Assert.AreEqual(ret1, ret3);
+        }
+
+        [Test]
+        public async Task ResetBlacklistForHostShouldNotFailNorThrowException()
+        {
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
+            var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            selector.ResetBlacklistForHost(ret1);
+            var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            Assert.AreEqual(ret1, ret2);
+        }
+
+        public async Task ResetBlacklistForHostAfterAllHostPutInQuaranine()
+        {
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var save = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             var ret = save;
             do
@@ -63,6 +96,7 @@ namespace DnsSrvTool.Test
                 ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             }
             while (ret != null);
+
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNull(ret);
             selector.ResetBlacklistForHost(save);
@@ -73,7 +107,8 @@ namespace DnsSrvTool.Test
         [Test]
         public async Task ResetShouldAllowToRecallTheDns()
         {
-            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, 10);
+            var logger = CreateLoggers.CreateILoggerFromNLog();
+            var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, logger);
             var ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             do
             {
@@ -81,6 +116,7 @@ namespace DnsSrvTool.Test
                 ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             }
             while (ret != null);
+
             selector.Reset();
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNotNull(ret);

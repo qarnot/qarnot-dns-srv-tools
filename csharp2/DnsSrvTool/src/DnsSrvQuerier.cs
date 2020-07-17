@@ -21,7 +21,7 @@ namespace DnsSrvTool
             Logger = logger;
         }
 
-        internal List<DnsSrvResultEntry> ResolveServiceProcessResult(IDnsQueryResponse result)
+        protected List<DnsSrvResultEntry> ResolveServiceProcessResult(IDnsQueryResponse result)
         {
             // https://github.com/MichaCo/DnsClient.NET/blob/dev/src/DnsClient/DnsQueryExtensions.cs/#L628
             var hosts = new List<DnsSrvResultEntry>();
@@ -50,7 +50,7 @@ namespace DnsSrvTool
             return hosts;
         }
 
-        internal string CreateDnsQueryString(DnsSrvServiceDescription service)
+        protected string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
             string dnsQueryString =  $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
             Logger?.LogDebug("Dns query string build : " + dnsQueryString);

@@ -53,6 +53,7 @@ coverage: coverage-dotnet# run all tests and collect coverage
 coverage-dotnet:
 	@echo "\e[92mRunning Dotnet Code Coverage:\033[0m"
 	-rm ${TEST_NAME}/TestResults/*/coverage.cobertura.xml
+	-rm -r ${TEST_NAME}/TestResults/*/
 	dotnet test ${TEST_NAME} $(COVERAGE_MSBUILD_OPTION)
 	cp ${TEST_NAME}/TestResults/*/coverage.cobertura.xml ./coverage
 	@# see https://github.com/coverlet-coverage/coverlet/blob/master/Documentation/VSTestIntegration.md
