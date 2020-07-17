@@ -6,9 +6,8 @@ namespace DnsSrvTool
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
 
-#pragma warning disable CA1054, SA1611, CS1591
-    // And a concrete implementation
     public class DnsServiceTargetSelectorReal : IDnsServiceTargetSelector
     {
         private IDnsSrvQuerier DnsQuerier { get; }
@@ -17,17 +16,19 @@ namespace DnsSrvTool
 
         private DnsSrvQueryResult QueryResult { get; set; }
 
-        private uint ResultCacheTimeTtl { get; set; }
+        private uint ResultCacheTimeTtl { get; }
 
-        private uint ServerRecoveryUnavailableTime { get; set; }
+        private uint ServerRecoveryUnavailableTime { get; }
 
-        private DateTime ServerRecoveryPeriod { get; set; }
+        private DateTime ServerRecoveryPeriod { get; }
 
         private Semaphore SemaphoreKey;
 
+        private ILogger Logger;
+
         private bool WaitForSeverRecovery => ServerRecoveryPeriod > DateTime.UtcNow;
 
-        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint resultCacheTtlInSecond, uint resultRecoveryTtlFromFailInSecond)
+        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint resultCacheTtlInSecond, uint resultRecoveryTtlFromFailInSecond, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
             DnsSortResult = dnsSortResult;
@@ -35,19 +36,24 @@ namespace DnsSrvTool
             ServerRecoveryUnavailableTime = resultRecoveryTtlFromFailInSecond; // extract to the class?
             ServerRecoveryPeriod = DateTime.UtcNow;
             SemaphoreKey = new Semaphore(1, 1);
+            Logger = logger;
         }
 
         private bool ShouldRetrieveResult => QueryResult == null || !QueryResult.IsAvailable;
+
         private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
         {
             SemaphoreKey.WaitOne();
             try
             {
-            if (ShouldRetrieveResult)
-            {
-                QueryResult = await DnsQuerier.QueryServiceAsync(service);
-                QueryResult = DnsSortResult.Sort(QueryResult);
-            }
+                if (ShouldRetrieveResult)
+                {
+                    Logger?.LogInformation($"Retrieve Dns call");
+
+                    QueryResult = await DnsQuerier.QueryServiceAsync(service);
+                    Logger?.LogTrace($"Dns result create ");
+                    DnsSortResult.Sort(QueryResult);
+                }
             }
             finally
             {
@@ -55,8 +61,6 @@ namespace DnsSrvTool
             }
         }
 
-
-        // should verify the service
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
             if (service == null)
@@ -64,61 +68,53 @@ namespace DnsSrvTool
                 throw new ArgumentNullException("service cannot be null");
             }
 
-            // // if fail increase the
-            // // wait time before retrieve result
-            // if (WaitForSeverRecovery)
-            // {
-            //     // return test quarantaine
-            //     // if no quarantaine reset
-            //     return null;
-            // }
-
             if (ShouldRetrieveResult)
             {
                 await RetrieveQueryResultFromDnsAsync(service);
             }
 
-
-            DnsSrvResultEntry entryFound = null;
             SemaphoreKey.WaitOne();
             try
             {
-                entryFound = QueryResult?.DnsEntries?.FirstOrDefault(entry => entry.IsAvailable);
+                DnsSrvResultEntry entryFound = QueryResult?.DnsEntries?.FirstOrDefault(entry => entry.IsAvailable);
 
-                if (entryFound == null)
+                if (entryFound != null)
                 {
-                    // ????
-                    // ServerRecoveryPeriod = DateTime.UtcNow.AddSeconds(ServerRecoveryUnavailableTime);
-                    return null;
+                    Logger?.LogTrace($"entry found {entryFound}");
+                    return entryFound.DnsEndPoint;
                 }
+
+                QueryResult?.ReduceLiveTime(ServerRecoveryUnavailableTime);
+                Logger?.LogTrace($"No entry found ");
+                Logger?.LogTrace($"restore DNS entries in {QueryResult?.TtlEndTime}");
             }
             finally
             {
                 SemaphoreKey.Release();
             }
+            return null;
 
-            return entryFound.DnsEndPoint;
         }
 
-        // Blacklist a host for some time. No questions asked.
         public void BlacklistHostFor(DnsEndPoint dnsHost, TimeSpan duration)
         {
             if (dnsHost == null)
             {
+                Logger?.LogDebug($"Empty dnsHost given");
                 throw new ArgumentNullException(nameof(dnsHost));
             }
-
 
             SemaphoreKey.WaitOne();
             try
             {
-            QueryResult?.DnsEntries.ForEach(entry =>
-            {
-                if (entry.HostName == dnsHost.Host && entry.Port == dnsHost.Port)
+                QueryResult?.DnsEntries.ForEach(entry =>
                 {
-                    entry.PutInQuarantine(duration);
-                }
-            });
+                    if (entry.HostName == dnsHost.Host && entry.Port == dnsHost.Port)
+                    {
+                        Logger?.LogTrace($"entry {entry} put in quarantine for : {duration}");
+                        entry.PutInQuarantine(duration);
+                    }
+                });
             }
             finally
             {
@@ -126,20 +122,20 @@ namespace DnsSrvTool
             }
         }
 
-        // Immediately remove a host from blacklist
         public void ResetBlacklistForHost(DnsEndPoint host)
         {
 
             SemaphoreKey.WaitOne();
             try
             {
-            QueryResult?.DnsEntries?.ForEach(entry =>
-            {
-                if (entry.HostName == host.Host && entry.Port == host.Port)
+                QueryResult?.DnsEntries?.ForEach(entry =>
                 {
-                    entry.ResetQuarantine();
-                }
-            });
+                    if (entry.HostName == host.Host && entry.Port == host.Port)
+                    {
+                        Logger?.LogTrace($"entry {entry} quarantine reset");
+                        entry.ResetQuarantine();
+                    }
+                });
             }
             finally
             {
@@ -147,28 +143,18 @@ namespace DnsSrvTool
             }
         }
 
-        // Most implementation (except mocks) will be stateful, a Reset() method will be handy.
         public void Reset()
         {
-
             SemaphoreKey.WaitOne();
             try
             {
-            ServerRecoveryPeriod = DateTime.UtcNow;
-            QueryResult = null;
+                Logger?.LogTrace($"Reset of DnsServiceTargetSelectorReal");
+                QueryResult = null;
             }
             finally
             {
                 SemaphoreKey.Release();
             }
         }
-
-        // In this class, you will implement logic to handle querying, retrying queries
-        // to DNS if they fail, timing out the blacklisting, caching the query result for
-        // some time, ...
-
-        // You will NOT handle:
-        //      - building URIs (here we don't know what an URI is
-        //      - making decisions about what should be blacklisted
     }
 }

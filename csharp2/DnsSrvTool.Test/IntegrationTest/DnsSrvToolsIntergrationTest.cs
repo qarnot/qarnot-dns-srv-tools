@@ -8,6 +8,8 @@ namespace DnsSrvTool.Test
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft.Extensions.Logging;
+    using NLog;
     using DnsClient;
     using NUnit.Framework;
 
@@ -60,13 +62,42 @@ namespace DnsSrvTool.Test
             return handlerWrapper;
         }
 
+        private Microsoft.Extensions.Logging.ILogger createILoggerFromNLog(bool debug = false)
+        {
+            // Example of NLog build
+            // https://stackoverflow.com/questions/56534730/nlog-works-in-asp-net-core-app-but-not-in-net-core-xunit-test-project
+            // NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
+            var configuration = new NLog.Config.LoggingConfiguration();
+            configuration.AddRuleForAllLevels(new NLog.Targets.ConsoleTarget());
+            NLog.Web.NLogBuilder.ConfigureNLog(configuration);
+
+            // Create provider to bridge Microsoft.Extensions.Logging
+            var provider = new NLog.Extensions.Logging.NLogLoggerProvider();
+
+            // Create logger
+            Microsoft.Extensions.Logging.ILogger logger = provider.CreateLogger(typeof(DnsSrvToolsIntergrationTest).FullName);
+            if (debug)
+            {
+                // ILogger logger = NLog.LogManager.GetCurrentClassLogger();
+                logger.LogDebug("This is a test of the log system : LogDebug.");
+                logger.LogTrace("This is a test of the log system : LogTrace.");
+                logger.LogInformation("This is a test of the log system : LogInformation.");
+                logger.LogWarning("This is a test of the log system : LogWarning.");
+                logger.LogError("This is a test of the log system : LogError.");
+                logger.LogCritical("This is a test of the log system : LogCritical.");
+            }
+
+            return logger;
+        }
+
         [Test]
         public async Task LaunchASimpleRequestMustSuccess()
         {
+            var logger = createILoggerFromNLog();
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(), logger);
             using HandlerWrapper handlerWrapper = WrapDnsHandler(dnsHandler, "responseSuccess");
 
             // create the request
@@ -77,6 +108,7 @@ namespace DnsSrvTool.Test
             var content = await result.Content.ReadAsStringAsync();
 
             Assert.AreEqual(content, "responseSuccess");
+            Assert.IsTrue(false);
         }
 
         [Test]

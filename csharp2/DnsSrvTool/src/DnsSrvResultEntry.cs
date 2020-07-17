@@ -3,12 +3,11 @@ namespace DnsSrvTool
     using System;
     using System.Net;
 
-#pragma warning disable CA1054, SA1611, CS1591
     public class DnsSrvResultEntry
     {
         public string HostName { get; }
         public int Port { get; }
-        public int TimeToLiveInSec { get; } // usefull ?
+        public int TimeToLiveInSec { get; }
         public int Priority { get; }
         public int Weight { get; }
         public DateTime CreationTime { get; }

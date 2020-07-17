@@ -9,7 +9,6 @@ namespace DnsSrvTool
     using DnsClient;
     using DnsClient.Protocol;
 
-#pragma warning disable CA1054, SA1611, CS1591
     public class DnsSrvQuerier: IDnsSrvQuerier
     {
         private ILookupClient LookupClient { get; }

@@ -73,7 +73,6 @@ namespace DnsSrvTool.Test
         [Test]
         public async Task ResetShouldNotFail()
         {
-            return ;
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, 10);
             var ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             // put everyting in bl

@@ -4,8 +4,6 @@ namespace DnsSrvTool
     using System.Collections.Generic;
     using System.Linq;
 
-#pragma warning disable CA1054, SA1611, CS1591
-    // Making requests, this is pure mechanism
     public class DnsSrvSortResult : IDnsSrvSortResult
     {
         private Random Rand { get; }
@@ -34,7 +32,6 @@ namespace DnsSrvTool
         /// <returns> ServiceHostEntries sort using the weight to draw the list.</returns>
         protected IEnumerable<DnsSrvResultEntry> LoadBalancePriorityArrayByWeight(IEnumerable<DnsSrvResultEntry> priorityEnumerable)
         {
-            // sort it with random extract each element with it's weight
             var drawByWeight = new List<DnsSrvResultEntry>();
 
             var list = priorityEnumerable.ToList();

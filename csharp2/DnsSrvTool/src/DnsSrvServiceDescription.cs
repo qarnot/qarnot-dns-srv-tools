@@ -2,7 +2,6 @@ namespace DnsSrvTool
 {
     using System.Net.Sockets;
 
-#pragma warning disable CA1054, SA1611, CS1591
     public class DnsSrvServiceDescription
     {
         public string ServiceName { get; }

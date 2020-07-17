@@ -1,14 +1,12 @@
 namespace DnsSrvTool
 {
     using System;
-    using Microsoft.Extensions.Logging;
     using System.Net;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
     using DnsClient;
-
-#pragma warning disable CA1054, SA1611, CS1591
+    using Microsoft.Extensions.Logging;
 
     public class DnsServiceBalancingMessageHandler : DelegatingHandler
     {
@@ -21,7 +19,7 @@ namespace DnsSrvTool
             DnsSrvServiceDescription serviceDescription,
             IDnsServiceTargetSelector targetSelector,
             ITargetQuarantinePolicy quarantinePolicy,
-            ILogger logger)
+            ILogger logger = null)
         {
             ServiceDescription = serviceDescription;
             TargetSelector = targetSelector;
@@ -36,6 +34,7 @@ namespace DnsSrvTool
                 return original;
             }
 
+            Logger?.LogInformation($"ReplaceHost: OldHost: {original.Host}:{original.Port} NewHost: {newHost.Host}:{newHost.Port}");
             var builder = new UriBuilder(original)
             {
                 Host = newHost.Host,
@@ -58,13 +57,16 @@ namespace DnsSrvTool
             DnsEndPoint host = await TargetSelector.SelectHostAsync(ServiceDescription);
             if (host == null)
             {
+                Logger?.LogInformation($"No Host Found");
                 return await base.SendAsync(request, cancellationToken);
             }
 
             request.RequestUri = ReplaceHost(request.RequestUri, host);
             var response = await base.SendAsync(request, cancellationToken);
+            Logger?.LogInformation($"Response status code : {response.StatusCode}");
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
+                Logger?.LogInformation($"Host {host} is put in quarantine");
                 TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
                 request.RequestUri = originalUri;
                 return await SendAsync(request, cancellationToken);
