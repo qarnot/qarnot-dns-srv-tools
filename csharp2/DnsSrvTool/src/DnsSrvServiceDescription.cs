@@ -1,5 +1,6 @@
 namespace DnsSrvTool
 {
+    using System;
     using System.Net.Sockets;
 
     public class DnsSrvServiceDescription
@@ -13,6 +14,19 @@ namespace DnsSrvTool
             ServiceName = serviceName;
             Protocol = protocol;
             Domain = domain;
+        }
+
+        public override bool Equals(Object obj)
+        {
+            if ((obj == null) || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            else
+            {
+                DnsSrvServiceDescription service = (DnsSrvServiceDescription)obj;
+                return (ServiceName == service.ServiceName) && (Protocol == service.Protocol) && (Domain == service.Domain);
+            }
         }
     }
 }

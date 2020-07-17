@@ -57,7 +57,7 @@ namespace DnsSrvTool
             DnsEndPoint host = await TargetSelector.SelectHostAsync(ServiceDescription);
             if (host == null)
             {
-                Logger?.LogInformation($"No Host Found");
+                Logger?.LogInformation($"No Dns Host Found");
                 return await base.SendAsync(request, cancellationToken);
             }
 
@@ -66,7 +66,7 @@ namespace DnsSrvTool
             Logger?.LogInformation($"Response status code : {response.StatusCode}");
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
-                Logger?.LogInformation($"Host {host} is put in quarantine");
+                Logger?.LogInformation($"Host {host} is send in quarantine");
                 TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
                 request.RequestUri = originalUri;
                 return await SendAsync(request, cancellationToken);

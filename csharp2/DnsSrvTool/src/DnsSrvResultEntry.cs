@@ -41,5 +41,16 @@ namespace DnsSrvTool
         }
 
         public DnsEndPoint DnsEndPoint => new DnsEndPoint(HostName, Port);
+
+
+        public string ToFullString()
+        {
+            return $"HostName: {HostName} Port: {Port} Priority: {Priority} Weight: {Weight} TimeToLiveInSec: {TimeToLiveInSec} CreationTime: {CreationTime} TtlEndTime: {TtlEndTime} QuarantineUntilTime: {QuarantineUntilTime}";
+        }
+
+        public override string ToString()
+        {
+            return "{Host:" + $"{HostName}" + " Port:" + $"{Port}" + "}";
+        }
     }
 }

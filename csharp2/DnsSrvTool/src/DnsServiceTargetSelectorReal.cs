@@ -20,21 +20,18 @@ namespace DnsSrvTool
 
         private uint ServerRecoveryUnavailableTime { get; }
 
-        private DateTime ServerRecoveryPeriod { get; }
-
         private Semaphore SemaphoreKey;
 
         private ILogger Logger;
 
-        private bool WaitForSeverRecovery => ServerRecoveryPeriod > DateTime.UtcNow;
+        private DnsSrvServiceDescription LastService;
 
-        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint resultCacheTtlInSecond, uint resultRecoveryTtlFromFailInSecond, ILogger logger = null)
+        public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint resultCacheTtlInSecond, uint serverRecoveryUnavailableTime, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
             DnsSortResult = dnsSortResult;
             ResultCacheTimeTtl = resultCacheTtlInSecond;
-            ServerRecoveryUnavailableTime = resultRecoveryTtlFromFailInSecond; // extract to the class?
-            ServerRecoveryPeriod = DateTime.UtcNow;
+            ServerRecoveryUnavailableTime = serverRecoveryUnavailableTime;
             SemaphoreKey = new Semaphore(1, 1);
             Logger = logger;
         }
@@ -46,13 +43,12 @@ namespace DnsSrvTool
             SemaphoreKey.WaitOne();
             try
             {
-                if (ShouldRetrieveResult)
+                if (service == LastService || ShouldRetrieveResult)
                 {
-                    Logger?.LogInformation($"Retrieve Dns call");
-
+                    Logger?.LogTrace($"Call the Dns Srv server");
                     QueryResult = await DnsQuerier.QueryServiceAsync(service);
-                    Logger?.LogTrace($"Dns result create ");
                     DnsSortResult.Sort(QueryResult);
+                    LastService = service;
                 }
             }
             finally
@@ -65,6 +61,7 @@ namespace DnsSrvTool
         {
             if (service == null)
             {
+                Logger?.LogDebug($"DnsSrvServiceDescription service null found");
                 throw new ArgumentNullException("service cannot be null");
             }
 
@@ -85,15 +82,14 @@ namespace DnsSrvTool
                 }
 
                 QueryResult?.ReduceLiveTime(ServerRecoveryUnavailableTime);
-                Logger?.LogTrace($"No entry found ");
-                Logger?.LogTrace($"restore DNS entries in {QueryResult?.TtlEndTime}");
+                Logger?.LogTrace($"No entry found : 0 / {QueryResult?.DnsEntries?.Count ?? 0}");
+                Logger?.LogTrace($"The DNS server will be recall at: {QueryResult?.TtlEndTime}");
             }
             finally
             {
                 SemaphoreKey.Release();
             }
             return null;
-
         }
 
         public void BlacklistHostFor(DnsEndPoint dnsHost, TimeSpan duration)
@@ -124,7 +120,6 @@ namespace DnsSrvTool
 
         public void ResetBlacklistForHost(DnsEndPoint host)
         {
-
             SemaphoreKey.WaitOne();
             try
             {

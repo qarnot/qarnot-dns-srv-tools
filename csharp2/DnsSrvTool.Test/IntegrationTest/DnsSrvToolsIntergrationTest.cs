@@ -9,8 +9,8 @@ namespace DnsSrvTool.Test
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
-    using NLog;
     using DnsClient;
+    using NLog;
     using NUnit.Framework;
 
     [TestFixture]
@@ -62,38 +62,10 @@ namespace DnsSrvTool.Test
             return handlerWrapper;
         }
 
-        private Microsoft.Extensions.Logging.ILogger createILoggerFromNLog(bool debug = false)
-        {
-            // Example of NLog build
-            // https://stackoverflow.com/questions/56534730/nlog-works-in-asp-net-core-app-but-not-in-net-core-xunit-test-project
-            // NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
-            var configuration = new NLog.Config.LoggingConfiguration();
-            configuration.AddRuleForAllLevels(new NLog.Targets.ConsoleTarget());
-            NLog.Web.NLogBuilder.ConfigureNLog(configuration);
-
-            // Create provider to bridge Microsoft.Extensions.Logging
-            var provider = new NLog.Extensions.Logging.NLogLoggerProvider();
-
-            // Create logger
-            Microsoft.Extensions.Logging.ILogger logger = provider.CreateLogger(typeof(DnsSrvToolsIntergrationTest).FullName);
-            if (debug)
-            {
-                // ILogger logger = NLog.LogManager.GetCurrentClassLogger();
-                logger.LogDebug("This is a test of the log system : LogDebug.");
-                logger.LogTrace("This is a test of the log system : LogTrace.");
-                logger.LogInformation("This is a test of the log system : LogInformation.");
-                logger.LogWarning("This is a test of the log system : LogWarning.");
-                logger.LogError("This is a test of the log system : LogError.");
-                logger.LogCritical("This is a test of the log system : LogCritical.");
-            }
-
-            return logger;
-        }
-
         [Test]
         public async Task LaunchASimpleRequestMustSuccess()
         {
-            var logger = createILoggerFromNLog();
+            var logger = CreateILoggerFromNLog();
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
@@ -108,7 +80,6 @@ namespace DnsSrvTool.Test
             var content = await result.Content.ReadAsStringAsync();
 
             Assert.AreEqual(content, "responseSuccess");
-            Assert.IsTrue(false);
         }
 
         [Test]
@@ -174,6 +145,7 @@ namespace DnsSrvTool.Test
         [Test]
         public async Task LaunchErrorUseTheOriginalUriIfNoDnsServerWork()
         {
+            var logger = CreateILoggerFromNLog();
             FakeHTTPHandler handler = new FakeHTTPHandler();
             handler.ReturnMessage = "responseSuccess";
             handler.ReturnStatusCodeList = new List<HttpStatusCode>() { HttpStatusCode.InternalServerError };
@@ -181,7 +153,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 20, 10, logger), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), logger);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -205,7 +177,6 @@ namespace DnsSrvTool.Test
             result = await handlerWrapper.Send(requestMessage2, default(CancellationToken));
             content = await result.Content.ReadAsStringAsync();
 
-            // Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
             Assert.AreEqual("responseSuccess", content);
             Assert.AreEqual(result.StatusCode, HttpStatusCode.Accepted);
             Assert.AreEqual("hello.world.com", handler.UrlCall.Host);
@@ -256,6 +227,35 @@ namespace DnsSrvTool.Test
             Assert.AreEqual("responseSuccess", content);
             Assert.AreEqual(result.StatusCode, HttpStatusCode.Accepted);
             Assert.AreEqual(querier.DnsSrvResultEntryList[0].HostName, handler.UrlCall.Host);
+        }
+
+        private Microsoft.Extensions.Logging.ILogger CreateILoggerFromNLog(bool debug = false)
+        {
+            // Example of NLog build
+            // https://stackoverflow.com/questions/56534730/nlog-works-in-asp-net-core-app-but-not-in-net-core-xunit-test-project
+            // NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
+            var configuration = new NLog.Config.LoggingConfiguration();
+            configuration.AddRuleForAllLevels(new NLog.Targets.ConsoleTarget());
+            NLog.Web.NLogBuilder.ConfigureNLog(configuration);
+
+            // Create provider to bridge Microsoft.Extensions.Logging
+            var provider = new NLog.Extensions.Logging.NLogLoggerProvider();
+
+            // Create logger
+            Microsoft.Extensions.Logging.ILogger logger = provider.CreateLogger(typeof(DnsSrvToolsIntergrationTest).FullName);
+
+            // ILogger logger = NLog.LogManager.GetCurrentClassLogger();
+            if (debug)
+            {
+                logger.LogDebug("This is a test of the log system : LogDebug.");
+                logger.LogTrace("This is a test of the log system : LogTrace.");
+                logger.LogInformation("This is a test of the log system : LogInformation.");
+                logger.LogWarning("This is a test of the log system : LogWarning.");
+                logger.LogError("This is a test of the log system : LogError.");
+                logger.LogCritical("This is a test of the log system : LogCritical.");
+            }
+
+            return logger;
         }
     }
 }

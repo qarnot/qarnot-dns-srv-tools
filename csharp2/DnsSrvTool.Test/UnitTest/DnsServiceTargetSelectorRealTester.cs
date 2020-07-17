@@ -71,14 +71,19 @@ namespace DnsSrvTool.Test
         }
 
         [Test]
-        public async Task ResetShouldNotFail()
+        public async Task ResetShouldAllowToRecallTheDns()
         {
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, 10);
             var ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            // put everyting in bl
+            do
+            {
+                selector.BlacklistHostFor(ret, new TimeSpan(1, 1, 1));
+                ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
+            }
+            while (ret != null);
             selector.Reset();
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            Assert.IsNull(ret);
+            Assert.IsNotNull(ret);
         }
     }
 }

@@ -8,14 +8,17 @@ namespace DnsSrvTool
     using System.Threading.Tasks;
     using DnsClient;
     using DnsClient.Protocol;
+    using Microsoft.Extensions.Logging;
 
     public class DnsSrvQuerier: IDnsSrvQuerier
     {
         private ILookupClient LookupClient { get; }
+        private ILogger Logger;
 
-        public DnsSrvQuerier(ILookupClient lookupClient)
+        public DnsSrvQuerier(ILookupClient lookupClient, ILogger logger = null)
         {
             LookupClient = lookupClient;
+            Logger = logger;
         }
 
         internal List<DnsSrvResultEntry> ResolveServiceProcessResult(IDnsQueryResponse result)
@@ -24,6 +27,7 @@ namespace DnsSrvTool
             var hosts = new List<DnsSrvResultEntry>();
             if (result == null || result.HasError)
             {
+                Logger?.LogDebug("Dns Request fail");
                 return hosts;
             }
 
@@ -36,8 +40,10 @@ namespace DnsSrvTool
                     .Select(p => p.CanonicalName).FirstOrDefault()
                     ?? entry.Target;
 
+                var dnsEntry = new DnsSrvResultEntry(hostName, entry.Port, entry.Priority, entry.Weight, timeToLive);
+                Logger?.LogTrace($"Dns Entry create : {dnsEntry.ToFullString()}");
                 hosts.Add(
-                    new DnsSrvResultEntry(hostName, entry.Port,entry.Priority, entry.Weight, timeToLive)
+                    dnsEntry
                 );
             }
 
@@ -46,7 +52,9 @@ namespace DnsSrvTool
 
         internal string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
-            return $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
+            string dnsQueryString =  $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
+            Logger?.LogDebug("Dns query string build : " + dnsQueryString);
+            return dnsQueryString;
         }
 
         public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
