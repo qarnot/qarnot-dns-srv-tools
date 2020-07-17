@@ -8,6 +8,10 @@ namespace DnsSrvTool
     using DnsClient;
     using Microsoft.Extensions.Logging;
 
+    /// <summary>
+    /// DelegatingHandler used to get the dsn srv hostnames
+    /// and use them to do the called request
+    /// </summary>
     public class DnsServiceBalancingMessageHandler : DelegatingHandler
     {
         private DnsSrvServiceDescription ServiceDescription { get; }
@@ -15,6 +19,13 @@ namespace DnsSrvTool
         private ITargetQuarantinePolicy QuarantinePolicy { get; }
         private ILogger Logger { get; }
 
+        /// <summary>
+        /// DnsServiceBalancingMessageHandler constructor.
+        /// </summary>
+        /// <param name="serviceDescription">The server description.</param>
+        /// <param name="targetSelector">The api caller and selector.</param>
+        /// <param name="quarantinePolicy">The respose quarantine policy to blacklist an host and retrieve the request.</param>
+        /// <param name="logger">The logger.</param>
         public DnsServiceBalancingMessageHandler(
             DnsSrvServiceDescription serviceDescription,
             IDnsServiceTargetSelector targetSelector,

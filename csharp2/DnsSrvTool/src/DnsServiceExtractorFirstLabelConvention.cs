@@ -5,16 +5,40 @@ namespace DnsSrvTool
     using System.Linq;
     using System.Net.Sockets;
 
+    /// <summary>
+    /// Extractor of object to DnsSrvServiceDescription.
+    /// </summary>
     public class DnsServiceExtractorFirstLabelConvention : IDnsServiceExtractor
     {
+        /// <summary>
+        /// Default protocol
+        /// </summary>
         public const ProtocolType DEFAULT_PROTOCOL = ProtocolType.Tcp;
 
+        /// <summary>
+        /// Protocol to use.
+        /// </summary>
+        /// <value>Getter of a ProtocolType</value>
         public ProtocolType Protocol { get; }
 
+        /// <summary>
+        /// Services allow by the extreactor.
+        /// </summary>
+        /// <value>Getter of the ServiceWhiteList.</value>
         public IEnumerable<string> ServiceWhiteList { get; }
 
+        /// <summary>
+        /// Domains names allow by the extreactor.
+        /// </summary>
+        /// <value>Getter of the DomainWhiteList.</value>
         public IEnumerable<string> DomainWhiteList { get; }
 
+        /// <summary>
+        /// Allow subdommains to be in the whitelist.
+        /// example: DomainWhiteList["qarnot.com"]
+        /// subdomaine : ["test.qarnot.com"]
+        /// </summary>
+        /// <value>Getter of the subdomains</value>
         private bool AllowSubDomains { get; }
 
         public DnsServiceExtractorFirstLabelConvention(ProtocolType? protocol, IEnumerable<string> serviceWhiteList = null, IEnumerable<string> domainWhiteList = null, bool allowSubDomains = false)
@@ -25,6 +49,11 @@ namespace DnsSrvTool
             AllowSubDomains = allowSubDomains;
         }
 
+        /// <summary>
+        /// Extract a service and a domain from an Uri.
+        /// </summary>
+        /// <param name="uri">Uri to be extract</param>
+        /// <returns>DnsSrvServiceDescription object</returns>
         public DnsSrvServiceDescription FromUri(Uri uri)
         {
             var splitIndex = uri.DnsSafeHost.IndexOf(".");

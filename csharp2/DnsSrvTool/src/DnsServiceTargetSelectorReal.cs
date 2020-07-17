@@ -8,6 +8,9 @@ namespace DnsSrvTool
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
 
+    /// <summary>
+    /// DnsServiceTargetSelectorReal class
+    /// </summary>
     public class DnsServiceTargetSelectorReal : IDnsServiceTargetSelector
     {
         private IDnsSrvQuerier DnsQuerier { get; }
@@ -24,6 +27,13 @@ namespace DnsSrvTool
 
         private DnsSrvServiceDescription LastService;
 
+        /// <summary>
+        /// DnsServiceTargetSelectorReal constructor.
+        /// </summary>
+        /// <param name="dnsQuerier"></param>
+        /// <param name="dnsSortResult"></param>
+        /// <param name="serverRecoveryUnavailableTime"></param>
+        /// <param name="logger"></param>
         public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint serverRecoveryUnavailableTime, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
@@ -55,6 +65,11 @@ namespace DnsSrvTool
             }
         }
 
+        /// <summary>
+        /// SelectHostAsync.
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
             SemaphoreKey.WaitOne();
@@ -85,6 +100,11 @@ namespace DnsSrvTool
             return null;
         }
 
+        /// <summary>
+        /// BlacklistHostFor.
+        /// </summary>
+        /// <param name="dnsHost"></param>
+        /// <param name="duration"></param>
         public void BlacklistHostFor(DnsEndPoint dnsHost, TimeSpan duration)
         {
             if (dnsHost == null)
