@@ -30,6 +30,11 @@ namespace DnsSrvTool
             Logger = logger;
         }
 
+        /// <summary>
+        /// Extract the IDnsQueryResponse to build a List of DnsSrvResultEntry.
+        /// </summary>
+        /// <param name="result">Query response.</param>
+        /// <returns>Entities List.</returns>
         protected List<DnsSrvResultEntry> ResolveServiceProcessResult(IDnsQueryResponse result)
         {
             // https://github.com/MichaCo/DnsClient.NET/blob/dev/src/DnsClient/DnsQueryExtensions.cs/#L628
@@ -59,6 +64,11 @@ namespace DnsSrvTool
             return hosts;
         }
 
+        /// <summary>
+        /// Create a Dns url string from the DnsSrvServiceDescription.
+        /// </summary>
+        /// <param name="service">The dns info.</param>
+        /// <returns>Dns url create.</returns>
         protected string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
             string dnsQueryString =  $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
@@ -73,6 +83,11 @@ namespace DnsSrvTool
         /// <returns>Call Response with HostName, Port, Priority, Weight and Ttl.</returns>
         public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
         {
+            if (service == null)
+            {
+                throw new ArgumentNullException();
+            }
+
             string queryString = CreateDnsQueryString(service);
             var result = await LookupClient.QueryAsync(queryString, QueryType.SRV).ConfigureAwait(false);
             var queryResult = ResolveServiceProcessResult(result);

@@ -1,5 +1,6 @@
 namespace DnsSrvTool
 {
+    using System;
     using System.Collections.Generic;
     using DnsClient;
 
@@ -16,6 +17,11 @@ namespace DnsSrvTool
         /// <returns>Upper or lower priority.</returns>
         public int Compare(DnsSrvResultEntry x, DnsSrvResultEntry y)
         {
+            if (x == null || y == null)
+            {
+                throw new ArgumentNullException();
+            }
+
             return x.Priority - y.Priority;
         }
     }

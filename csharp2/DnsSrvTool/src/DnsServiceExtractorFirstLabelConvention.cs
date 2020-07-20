@@ -11,36 +11,44 @@ namespace DnsSrvTool
     public class DnsServiceExtractorFirstLabelConvention : IDnsServiceExtractor
     {
         /// <summary>
-        /// Default protocol
+        /// Default protocol.
         /// </summary>
         public const ProtocolType DEFAULT_PROTOCOL = ProtocolType.Tcp;
 
         /// <summary>
-        /// Protocol to use.
+        /// Gets Protocol to use.
         /// </summary>
-        /// <value>Getter of a ProtocolType</value>
+        /// <value>Getter of a ProtocolType.</value>
         public ProtocolType Protocol { get; }
 
         /// <summary>
-        /// Services allow by the extreactor.
+        /// Gets Services allow by the extreactor.
         /// </summary>
         /// <value>Getter of the ServiceWhiteList.</value>
         public IEnumerable<string> ServiceWhiteList { get; }
 
         /// <summary>
-        /// Domains names allow by the extreactor.
+        /// Gets Domains names allow by the extreactor.
         /// </summary>
         /// <value>Getter of the DomainWhiteList.</value>
         public IEnumerable<string> DomainWhiteList { get; }
 
         /// <summary>
+        /// Gets subdommains:
         /// Allow subdommains to be in the whitelist.
-        /// example: DomainWhiteList["qarnot.com"]
-        /// subdomaine : ["test.qarnot.com"]
+        /// example: DomainWhiteList["qarnot.com"].
+        /// subdomaine : ["test.qarnot.com"].
         /// </summary>
-        /// <value>Getter of the subdomains</value>
+        /// <value>Getter of the subdomains.</value>
         private bool AllowSubDomains { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DnsServiceExtractorFirstLabelConvention"/> class.
+        /// </summary>
+        /// <param name="protocol">protocol to be used (default, TCP).</param>
+        /// <param name="serviceWhiteList">Service White list if you not allow all the services.</param>
+        /// <param name="domainWhiteList">Domain White list if you not allow all the domains.</param>
+        /// <param name="allowSubDomains">allow the sub-domains of a domain (example test.qarnot.com if there is qarnot.com in the domain white.list)</param>
         public DnsServiceExtractorFirstLabelConvention(ProtocolType? protocol, IEnumerable<string> serviceWhiteList = null, IEnumerable<string> domainWhiteList = null, bool allowSubDomains = false)
         {
             Protocol = protocol ?? DEFAULT_PROTOCOL;
@@ -52,8 +60,8 @@ namespace DnsSrvTool
         /// <summary>
         /// Extract a service and a domain from an Uri.
         /// </summary>
-        /// <param name="uri">Uri to be extract</param>
-        /// <returns>DnsSrvServiceDescription object</returns>
+        /// <param name="uri">Uri to be extract.</param>
+        /// <returns>DnsSrvServiceDescription object.</returns>
         public DnsSrvServiceDescription FromUri(Uri uri)
         {
             var splitIndex = uri.DnsSafeHost.IndexOf(".");

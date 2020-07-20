@@ -30,9 +30,9 @@ namespace DnsSrvTool
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvServiceDescription"/> class.
         /// </summary>
-        /// <param name="serviceName"></param>
-        /// <param name="protocol"></param>
-        /// <param name="domain"></param>
+        /// <param name="serviceName">The dns service.</param>
+        /// <param name="protocol">The dns protocol.</param>
+        /// <param name="domain">The dns domain.</param>
         public DnsSrvServiceDescription(string serviceName, ProtocolType protocol, string domain)
         {
             ServiceName = serviceName;
@@ -40,7 +40,12 @@ namespace DnsSrvTool
             Domain = domain;
         }
 
-        public override bool Equals(Object obj)
+        /// <summary>
+        /// Are this object equal to an other DnsSrvServiceDescription.
+        /// </summary>
+        /// <param name="obj">an other DnsSrvServiceDescription.</param>
+        /// <returns>Is equal or not.</returns>
+        public override bool Equals(object obj)
         {
             if ((obj == null) || !this.GetType().Equals(obj.GetType()))
             {

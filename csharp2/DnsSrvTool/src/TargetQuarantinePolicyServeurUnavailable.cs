@@ -9,7 +9,7 @@ namespace DnsSrvTool
     public class TargetQuarantinePolicyServeurUnavailable : ITargetQuarantinePolicy
     {
         /// <summary>
-        /// Getter of the Quarantine Time.
+        /// Gets the Quarantine Time.
         /// </summary>
         /// <value>Quarantine Time</value>
         public TimeSpan QuarantineDuration { get; }

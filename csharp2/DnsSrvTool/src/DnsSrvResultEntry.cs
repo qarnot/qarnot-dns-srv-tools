@@ -9,54 +9,6 @@ namespace DnsSrvTool
     public class DnsSrvResultEntry
     {
         /// <summary>
-        /// Host name value.
-        /// </summary>
-        /// <value> Host name value</value>
-        public string HostName { get; }
-
-        /// <summary>
-        /// Port value.
-        /// </summary>
-        /// <value> Port value</value>
-        public int Port { get; }
-
-        /// <summary>
-        /// Time to live in second.
-        /// </summary>
-        /// <value> Time to live in second value</value>
-        public int TimeToLiveInSec { get; }
-
-        /// <summary>
-        /// Priority value.
-        /// </summary>
-        /// <value> Priority value</value>
-        public int Priority { get; }
-
-        /// <summary>
-        /// Weight value.
-        /// </summary>
-        /// <value> Weight value</value>
-        public int Weight { get; }
-
-        /// <summary>
-        /// Creation date.
-        /// </summary>
-        /// <value> Creation date</value>
-        public DateTime CreationTime { get; }
-
-        /// <summary>
-        /// Life Time End Date.
-        /// </summary>
-        /// <value> Life Time End Date</value>
-        public DateTime TtlEndTime { get; }
-
-        /// <summary>
-        /// Quarantine end date.
-        /// </summary>
-        /// <value> Quarantine end date</value>
-        public DateTime QuarantineUntilTime { get; private set; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvResultEntry"/> class.
         /// </summary>
         /// <param name="hostName">hostName.</param>
@@ -77,16 +29,72 @@ namespace DnsSrvTool
         }
 
         /// <summary>
-        /// Time to live passed.
+        /// Gets a DnsEndPoint of the entity.
+        /// </summary>
+        /// <returns>DnsEndPoint of the entity.</returns>
+        public DnsEndPoint DnsEndPoint => new DnsEndPoint(HostName, Port);
+
+        /// <summary>
+        /// Gets a value indicating whether Time to live passed.
         /// </summary>
         public bool IsAlive => TtlEndTime > DateTime.UtcNow;
 
         /// <summary>
-        /// Is alive and not in quarantine.
+        ///  Gets a value indicating whether that the entry is alive and not in quarantine.
         /// </summary>
         public bool IsAvailable => QuarantineUntilTime <= DateTime.UtcNow && IsAlive;
 
-        // Reset the quarantine time.
+        /// <summary>
+        /// Gets Host name value.
+        /// </summary>
+        /// <value> Host name value.</value>
+        public string HostName { get; }
+
+        /// <summary>
+        /// Gets Port value.
+        /// </summary>
+        /// <value> Port value.</value>
+        public int Port { get; }
+
+        /// <summary>
+        /// Gets Time to live in second.
+        /// </summary>
+        /// <value> Time to live in second value.</value>
+        public int TimeToLiveInSec { get; }
+
+        /// <summary>
+        /// Gets Priority value.
+        /// </summary>
+        /// <value> Priority value.</value>
+        public int Priority { get; }
+
+        /// <summary>
+        /// Gets Weight value.
+        /// </summary>
+        /// <value> Weight value.</value>
+        public int Weight { get; }
+
+        /// <summary>
+        /// Gets Creation date.
+        /// </summary>
+        /// <value> Creation date.</value>
+        public DateTime CreationTime { get; }
+
+        /// <summary>
+        /// Gets Life Time End Date.
+        /// </summary>
+        /// <value> Life Time End Date.</value>
+        public DateTime TtlEndTime { get; }
+
+        /// <summary>
+        /// Gets Quarantine end date.
+        /// </summary>
+        /// <value> Quarantine end date.</value>
+        public DateTime QuarantineUntilTime { get; private set; }
+
+        /// <summary>
+        /// Reset the quarantine time.
+        /// </summary>
         public void ResetQuarantine()
         {
             QuarantineUntilTime = DateTime.UtcNow;
@@ -100,12 +108,6 @@ namespace DnsSrvTool
         {
             QuarantineUntilTime = DateTime.UtcNow.Add(quarnatineDuration);
         }
-
-        /// <summary>
-        /// Return a DnsEndPoint of the entity.
-        /// </summary>
-        /// <returns>DnsEndPoint of the entity</returns>
-        public DnsEndPoint DnsEndPoint => new DnsEndPoint(HostName, Port);
 
         /// <summary>
         /// Print the full Entity information.

@@ -10,15 +10,10 @@ namespace DnsSrvTool
 
     /// <summary>
     /// DelegatingHandler used to get the dsn srv hostnames
-    /// and use them to do the called request
+    /// and use them to do the called request.
     /// </summary>
     public class DnsServiceBalancingMessageHandler : DelegatingHandler
     {
-        private DnsSrvServiceDescription ServiceDescription { get; }
-        private IDnsServiceTargetSelector TargetSelector { get; }
-        private ITargetQuarantinePolicy QuarantinePolicy { get; }
-        private ILogger Logger { get; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsServiceBalancingMessageHandler"/> class.
         /// </summary>
@@ -38,27 +33,25 @@ namespace DnsSrvTool
             Logger = logger;
         }
 
-        private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
-        {
-            Logger?.LogInformation($"ReplaceHost: OldHost: {original.Host}:{original.Port} NewHost: {newHost.Host}:{newHost.Port}");
-            var builder = new UriBuilder(original)
-            {
-                Host = newHost.Host,
-                Port = newHost.Port,
-            };
-
-            return builder.Uri;
-        }
+        private DnsSrvServiceDescription ServiceDescription { get; }
+        private IDnsServiceTargetSelector TargetSelector { get; }
+        private ITargetQuarantinePolicy QuarantinePolicy { get; }
+        private ILogger Logger { get; }
 
         /// <summary>
         /// SendAsync override method.
-        /// Recursive call
+        /// Recursive call.
         /// </summary>
         /// <param name="request">The request given.</param>
         /// <param name="cancellationToken">The cancelation token.</param>
         /// <returns>The Http response.</returns>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             Uri originalUri = request.RequestUri;
             DnsEndPoint host = await TargetSelector.SelectHostAsync(ServiceDescription);
             if (host == null)
@@ -69,6 +62,11 @@ namespace DnsSrvTool
 
             request.RequestUri = ReplaceHost(request.RequestUri, host);
             var response = await base.SendAsync(request, cancellationToken);
+            if (response == null)
+            {
+                return response;
+            }
+
             Logger?.LogInformation($"Response status code : {response.StatusCode}");
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
@@ -79,6 +77,18 @@ namespace DnsSrvTool
             }
 
             return response;
+        }
+
+        private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
+        {
+            Logger?.LogInformation($"ReplaceHost: OldHost: {original.Host}:{original.Port} NewHost: {newHost.Host}:{newHost.Port}");
+            var builder = new UriBuilder(original)
+            {
+                Host = newHost.Host,
+                Port = newHost.Port,
+            };
+
+            return builder.Uri;
         }
     }
 }

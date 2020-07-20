@@ -30,10 +30,10 @@ namespace DnsSrvTool
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsServiceTargetSelectorReal"/> class.
         /// </summary>
-        /// <param name="dnsQuerier">caller of the dns</param>
-        /// <param name="dnsSortResult">Sort the results</param>
-        /// <param name="serverRecoveryUnavailableTime">recovery max-time if the server addresses are down, (should be lower than the time to live given by the dns)</param>
-        /// <param name="logger">Optional Logger if logs are necessary</param>
+        /// <param name="dnsQuerier">caller of the dns.</param>
+        /// <param name="dnsSortResult">Sort the results.</param>
+        /// <param name="serverRecoveryUnavailableTime">recovery max-time if the server addresses are down, (should be lower than the time to live given by the dns).</param>
+        /// <param name="logger">Optional Logger if logs are necessary.</param>
         public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint serverRecoveryUnavailableTime, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
@@ -68,8 +68,8 @@ namespace DnsSrvTool
         /// <summary>
         /// Retrive the chosen DNS response endPoint.
         /// </summary>
-        /// <param name="service">Dns service to call</param>
-        /// <returns>the DnsEndpoint response or null if no endPoint found</returns>
+        /// <param name="service">Dns service to call.</param>
+        /// <returns>the DnsEndpoint response or null if no endPoint found.</returns>
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
             SemaphoreKey.WaitOne();
