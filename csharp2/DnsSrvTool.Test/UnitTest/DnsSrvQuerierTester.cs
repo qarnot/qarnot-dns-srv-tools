@@ -11,15 +11,16 @@ namespace DnsSrvTool.Test
     using System.Threading.Tasks;
     using DnsClient;
     using DnsClient.Protocol;
-    using NUnit.Framework;
     using Moq;
+    using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303
+#pragma warning disable CA1305, CA1303, CA1304
 
     [TestFixture]
     public class DnsSrvQuerierTester : DnsSrvQuerier
     {
-        public DnsSrvQuerierTester(): base(null)
+        public DnsSrvQuerierTester()
+            : base(null)
         {
         }
 
@@ -28,29 +29,28 @@ namespace DnsSrvTool.Test
         {
             IDnsQueryResponse result = null;
             var mockResult = new Mock<IDnsQueryResponse>();
-            var mockAnswer = new Mock<SrvRecord>(); // ??
             DnsString canonicalName = DnsClient.DnsString.Parse("hostname.com");
             ResourceRecordInfo info = new ResourceRecordInfo(canonicalName, DnsClient.Protocol.ResourceRecordType.SRV, DnsClient.QueryClass.IN, 10, 1);
 
             var record = new SrvRecord(info, 1, 10, 443, canonicalName);
             var cNameRecord = new CNameRecord(info, canonicalName);
 
-            List<SrvRecord> answers = new List<SrvRecord>(){ record };
+            List<SrvRecord> answers = new List<SrvRecord>() { record };
             mockResult.Setup(foo => foo.Answers).Returns(answers);
-            mockResult.Setup(foo => foo.Additionals).Returns(new List<CNameRecord>(){ cNameRecord } );
+            mockResult.Setup(foo => foo.Additionals).Returns(new List<CNameRecord>() { cNameRecord });
             result = mockResult.Object;
-            List<DnsSrvResultEntry> ret = base.ResolveServiceProcessResult(result);
+            List<DnsSrvResultEntry> ret = ResolveServiceProcessResult(result);
         }
 
         [Test]
         public void CreateDnsQueryStringReturnTheGoodString()
         {
             DnsSrvServiceDescription service = new DnsSrvServiceDescription("test", ProtocolType.Tcp, "qarnot.com");
-            string queryString = base.CreateDnsQueryString(service);
+            string queryString = CreateDnsQueryString(service);
             Assert.AreEqual("_test._tcp.qarnot.com.", queryString.ToLower());
 
             service = new DnsSrvServiceDescription("test2", ProtocolType.Ipx, "hello.qarnot.com");
-            queryString = base.CreateDnsQueryString(service);
+            queryString = CreateDnsQueryString(service);
             Assert.AreEqual("_test2._ipx.hello.qarnot.com.", queryString.ToLower());
         }
     }

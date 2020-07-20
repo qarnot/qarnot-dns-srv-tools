@@ -20,7 +20,7 @@ namespace DnsSrvTool
         private ILogger Logger { get; }
 
         /// <summary>
-        /// DnsServiceBalancingMessageHandler constructor.
+        /// Initializes a new instance of the <see cref="DnsServiceBalancingMessageHandler"/> class.
         /// </summary>
         /// <param name="serviceDescription">The server description.</param>
         /// <param name="targetSelector">The api caller and selector.</param>

@@ -10,11 +10,20 @@ namespace DnsSrvTool
     using DnsClient.Protocol;
     using Microsoft.Extensions.Logging;
 
+    /// <summary>
+    /// Dns srv querier
+    /// use an ILookupClient to do a srv call
+    /// </summary>
     public class DnsSrvQuerier: IDnsSrvQuerier
     {
         private ILookupClient LookupClient { get; }
         private ILogger Logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DnsSrvQuerier"/> class.
+        /// </summary>
+        /// <param name="lookupClient">DnsClient object to do the DNS SRV calls.</param>
+        /// <param name="logger">Optional Logger</param>
         public DnsSrvQuerier(ILookupClient lookupClient, ILogger logger = null)
         {
             LookupClient = lookupClient;
@@ -57,6 +66,11 @@ namespace DnsSrvTool
             return dnsQueryString;
         }
 
+        /// <summary>
+        /// Ask a new srv call.
+        /// </summary>
+        /// <param name="service">Address to be call.</param>
+        /// <returns>Call Response with HostName, Port, Priority, Weight and Ttl.</returns>
         public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
         {
             string queryString = CreateDnsQueryString(service);

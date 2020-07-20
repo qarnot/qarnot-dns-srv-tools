@@ -28,12 +28,12 @@ namespace DnsSrvTool
         private DnsSrvServiceDescription LastService;
 
         /// <summary>
-        /// DnsServiceTargetSelectorReal constructor.
+        /// Initializes a new instance of the <see cref="DnsServiceTargetSelectorReal"/> class.
         /// </summary>
-        /// <param name="dnsQuerier"></param>
-        /// <param name="dnsSortResult"></param>
-        /// <param name="serverRecoveryUnavailableTime"></param>
-        /// <param name="logger"></param>
+        /// <param name="dnsQuerier">caller of the dns</param>
+        /// <param name="dnsSortResult">Sort the results</param>
+        /// <param name="serverRecoveryUnavailableTime">recovery max-time if the server addresses are down, (should be lower than the time to live given by the dns)</param>
+        /// <param name="logger">Optional Logger if logs are necessary</param>
         public DnsServiceTargetSelectorReal(IDnsSrvQuerier dnsQuerier, IDnsSrvSortResult dnsSortResult, uint serverRecoveryUnavailableTime, ILogger logger = null)
         {
             DnsQuerier = dnsQuerier;
@@ -66,10 +66,10 @@ namespace DnsSrvTool
         }
 
         /// <summary>
-        /// SelectHostAsync.
+        /// Retrive the chosen DNS response endPoint.
         /// </summary>
-        /// <param name="service"></param>
-        /// <returns></returns>
+        /// <param name="service">Dns service to call</param>
+        /// <returns>the DnsEndpoint response or null if no endPoint found</returns>
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
             SemaphoreKey.WaitOne();
@@ -101,10 +101,10 @@ namespace DnsSrvTool
         }
 
         /// <summary>
-        /// BlacklistHostFor.
+        /// Blacklist a DNS response endpoint.
         /// </summary>
-        /// <param name="dnsHost"></param>
-        /// <param name="duration"></param>
+        /// <param name="dnsHost">Host to be blacklist.</param>
+        /// <param name="duration">Blacklist duration.</param>
         public void BlacklistHostFor(DnsEndPoint dnsHost, TimeSpan duration)
         {
             if (dnsHost == null)
@@ -131,6 +131,10 @@ namespace DnsSrvTool
             }
         }
 
+        /// <summary>
+        /// Reset a blacklisted host.
+        /// </summary>
+        /// <param name="host">Host to be reset.</param>
         public void ResetBlacklistForHost(DnsEndPoint host)
         {
             SemaphoreKey.WaitOne();
@@ -151,6 +155,9 @@ namespace DnsSrvTool
             }
         }
 
+        /// <summary>
+        /// Reset all the DnsSrvServiceDescription values.
+        /// </summary>
         public void Reset()
         {
             SemaphoreKey.WaitOne();

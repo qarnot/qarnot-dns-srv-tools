@@ -8,11 +8,12 @@ namespace DnsSrvTool.Test
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
     using DnsClient;
+    using Microsoft.Extensions.Logging;
     using NLog;
     using NUnit.Framework;
 
+#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
     [TestFixture]
     public class DnsSrvToolsIntergrationTest
     {

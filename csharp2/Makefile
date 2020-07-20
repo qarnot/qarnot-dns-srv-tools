@@ -46,6 +46,7 @@ publish-nuget:
 	# dotnet pack
 
 document:
+	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe metadata ${DOC_NAME}/docfx_project/docfx.json
 	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe build ${DOC_NAME}/docfx_project/docfx.json
 
 coverage: coverage-dotnet# run all tests and collect coverage

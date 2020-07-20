@@ -4,10 +4,17 @@ namespace DnsSrvTool
     using System.Collections.Generic;
     using System.Linq;
 
+    /// <summary>
+    /// DnsSrvSortResult class.
+    /// </summary>
     public class DnsSrvSortResult : IDnsSrvSortResult
     {
         private Random Rand { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DnsSrvSortResult"/> class.
+        /// </summary>
+        /// <param name="radomSeed">Random seed if determinist random is needed</param>
         public DnsSrvSortResult(int? radomSeed = null)
         {
             Rand = radomSeed.HasValue ? new Random(radomSeed.Value) : new Random();
@@ -89,6 +96,11 @@ namespace DnsSrvTool
             return LoadBalanceByWeight(serviceList);
         }
 
+        /// <summary>
+        /// Sort a DnsSrvQueryResult.
+        /// </summary>
+        /// <param name="result">Result to be sort.</param>
+        /// <returns>return the result object sorted.</returns>
         public DnsSrvQueryResult Sort(DnsSrvQueryResult result)
         {
             if (result?.DnsEntries == null || result.DnsEntries.Count == 0)

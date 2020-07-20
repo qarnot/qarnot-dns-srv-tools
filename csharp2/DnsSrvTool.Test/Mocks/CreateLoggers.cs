@@ -8,12 +8,15 @@ namespace DnsSrvTool.Test
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Extensions.Logging;
     using DnsClient;
+    using Microsoft.Extensions.Logging;
     using NLog;
     using NUnit.Framework;
 
-    public class CreateLoggers
+#pragma warning disable CA1305, CA1303, CA1304
+#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
+
+    public static class CreateLoggers
     {
         public static Microsoft.Extensions.Logging.ILogger CreateILoggerFromNLog(bool debug = false)
         {
