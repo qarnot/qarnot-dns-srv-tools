@@ -9,15 +9,33 @@ namespace DnsSrvTool
     /// </summary>
     public class DnsSrvSortResult : IDnsSrvSortResult
     {
-        private Random Rand { get; }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvSortResult"/> class.
         /// </summary>
-        /// <param name="radomSeed">Random seed if determinist random is needed</param>
+        /// <param name="radomSeed">Random seed if determinist random is needed.</param>
         public DnsSrvSortResult(int? radomSeed = null)
         {
             Rand = radomSeed.HasValue ? new Random(radomSeed.Value) : new Random();
+        }
+
+        private Random Rand { get; }
+
+        /// <summary>
+        /// Sort a DnsSrvQueryResult.
+        /// </summary>
+        /// <param name="result">Result to be sort.</param>
+        /// <returns>return the result object sorted.</returns>
+        public DnsSrvQueryResult Sort(DnsSrvQueryResult result)
+        {
+            if (result?.DnsEntries == null || result.DnsEntries.Count == 0)
+            {
+                return result;
+            }
+
+            var sortEntries = BalanceSortServiceList(result.DnsEntries);
+            result.DnsEntries.Clear();
+            result.DnsEntries.AddRange(sortEntries);
+            return result;
         }
 
         /// <summary>
@@ -94,24 +112,6 @@ namespace DnsSrvTool
         {
             serviceList = SortByPriority(serviceList);
             return LoadBalanceByWeight(serviceList);
-        }
-
-        /// <summary>
-        /// Sort a DnsSrvQueryResult.
-        /// </summary>
-        /// <param name="result">Result to be sort.</param>
-        /// <returns>return the result object sorted.</returns>
-        public DnsSrvQueryResult Sort(DnsSrvQueryResult result)
-        {
-            if (result?.DnsEntries == null || result.DnsEntries.Count == 0)
-            {
-                return result;
-            }
-
-            var sortEntries = BalanceSortServiceList(result.DnsEntries);
-            result.DnsEntries.Clear();
-            result.DnsEntries.AddRange(sortEntries);
-            return result;
         }
     }
 }

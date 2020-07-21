@@ -14,7 +14,6 @@ namespace DnsSrvTool
         /// <value>Quarantine Time.</value>
         TimeSpan QuarantineDuration { get; }
 
-
         /// <summary>
         /// Check if the response should be set in quarnatine.
         /// </summary>

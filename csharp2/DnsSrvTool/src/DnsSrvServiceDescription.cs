@@ -59,12 +59,12 @@ namespace DnsSrvTool
         }
 
         /// <summary>
-        /// ;
+        /// Get the hash code of the service.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Return int hash code.</returns>
         public override int GetHashCode()
         {
-            return ServiceName.GetHashCode() +  Protocol.GetHashCode() + Domain.GetHashCode();
+            return ServiceName.GetHashCode() + Protocol.GetHashCode() + Domain.GetHashCode();
         }
     }
 }

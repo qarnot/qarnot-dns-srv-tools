@@ -9,12 +9,6 @@ namespace DnsSrvTool
     public class TargetQuarantinePolicyServeurUnavailable : ITargetQuarantinePolicy
     {
         /// <summary>
-        /// Gets the Quarantine Time.
-        /// </summary>
-        /// <value>Quarantine Time</value>
-        public TimeSpan QuarantineDuration { get; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="TargetQuarantinePolicyServeurUnavailable"/> class.
         /// </summary>
         /// <param name="quarantineDuration">Quarantine time.</param>
@@ -24,13 +18,19 @@ namespace DnsSrvTool
         }
 
         /// <summary>
+        /// Gets the Quarantine Time.
+        /// </summary>
+        /// <value>Quarantine Time.</value>
+        public TimeSpan QuarantineDuration { get; }
+
+        /// <summary>
         /// Check if the response should be set in quarnatine.
         /// </summary>
         /// <param name="response">Response object.</param>
         /// <returns>Should be set in quarantine or not.</returns>
         public bool ShouldQuarantine(HttpResponseMessage response)
         {
-            switch (response.StatusCode)
+            switch (response?.StatusCode)
             {
                 case System.Net.HttpStatusCode.InternalServerError:
                 case System.Net.HttpStatusCode.BadGateway:

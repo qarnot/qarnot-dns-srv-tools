@@ -13,7 +13,22 @@ namespace DnsSrvTool
         /// <summary>
         /// Default protocol.
         /// </summary>
-        public const ProtocolType DEFAULT_PROTOCOL = ProtocolType.Tcp;
+        public const ProtocolType DEFAULTPROTOCOL = ProtocolType.Tcp;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DnsServiceExtractorFirstLabelConvention"/> class.
+        /// </summary>
+        /// <param name="protocol">protocol to be used (default, TCP).</param>
+        /// <param name="serviceWhiteList">Service White list if you not allow all the services.</param>
+        /// <param name="domainWhiteList">Domain White list if you not allow all the domains.</param>
+        /// <param name="allowSubDomains">allow the sub-domains of a domain (example test.qarnot.com if there is qarnot.com in the domain white.list).</param>
+        public DnsServiceExtractorFirstLabelConvention(ProtocolType? protocol, IEnumerable<string> serviceWhiteList = null, IEnumerable<string> domainWhiteList = null, bool allowSubDomains = false)
+        {
+            Protocol = protocol ?? DEFAULTPROTOCOL;
+            ServiceWhiteList = serviceWhiteList;
+            DomainWhiteList = domainWhiteList;
+            AllowSubDomains = allowSubDomains;
+        }
 
         /// <summary>
         /// Gets Protocol to use.
@@ -34,28 +49,13 @@ namespace DnsSrvTool
         public IEnumerable<string> DomainWhiteList { get; }
 
         /// <summary>
-        /// Gets subdommains:
+        /// Gets a value indicating whether subdommains:
         /// Allow subdommains to be in the whitelist.
         /// example: DomainWhiteList["qarnot.com"].
         /// subdomaine : ["test.qarnot.com"].
         /// </summary>
         /// <value>Getter of the subdomains.</value>
         private bool AllowSubDomains { get; }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DnsServiceExtractorFirstLabelConvention"/> class.
-        /// </summary>
-        /// <param name="protocol">protocol to be used (default, TCP).</param>
-        /// <param name="serviceWhiteList">Service White list if you not allow all the services.</param>
-        /// <param name="domainWhiteList">Domain White list if you not allow all the domains.</param>
-        /// <param name="allowSubDomains">allow the sub-domains of a domain (example test.qarnot.com if there is qarnot.com in the domain white.list)</param>
-        public DnsServiceExtractorFirstLabelConvention(ProtocolType? protocol, IEnumerable<string> serviceWhiteList = null, IEnumerable<string> domainWhiteList = null, bool allowSubDomains = false)
-        {
-            Protocol = protocol ?? DEFAULT_PROTOCOL;
-            ServiceWhiteList = serviceWhiteList;
-            DomainWhiteList = domainWhiteList;
-            AllowSubDomains = allowSubDomains;
-        }
 
         /// <summary>
         /// Extract a service and a domain from an Uri.
@@ -69,8 +69,8 @@ namespace DnsSrvTool
             var domain = uri.DnsSafeHost.Substring(splitIndex + 1);
             if ((ServiceWhiteList != null && !ServiceWhiteList.Contains(serviceName)) ||
                 (DomainWhiteList != null &&
-                    ((AllowSubDomains && !DomainWhiteList.Any(dom => domain.EndsWith(dom)) ||
-                    (!AllowSubDomains && !DomainWhiteList.Contains(domain))))))
+                    ((AllowSubDomains && !DomainWhiteList.Any(dom => domain.EndsWith(dom))) ||
+                    (!AllowSubDomains && !DomainWhiteList.Contains(domain)))))
             {
                 return null;
             }
