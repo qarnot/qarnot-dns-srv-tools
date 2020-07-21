@@ -17,13 +17,17 @@ namespace DnsSrvTool
         /// <returns>Upper or lower priority.</returns>
         public int Compare(DnsSrvResultEntry x, DnsSrvResultEntry y)
         {
-            if (x == null || y == null)
+            if (x == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(x));
+            }
+
+            if (y == null)
+            {
+                throw new ArgumentNullException(nameof(y));
             }
 
             return x.Priority - y.Priority;
         }
     }
-
 }

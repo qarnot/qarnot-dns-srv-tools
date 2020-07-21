@@ -9,23 +9,17 @@ namespace DnsSrvTool
     using Microsoft.Extensions.Logging;
 
     /// <summary>
-    /// DnsServiceTargetSelectorReal class
+    /// DnsServiceTargetSelectorReal class.
     /// </summary>
-    public class DnsServiceTargetSelectorReal : IDnsServiceTargetSelector
+    public class DnsServiceTargetSelectorReal : IDnsServiceTargetSelector, IDisposable
     {
-        private IDnsSrvQuerier DnsQuerier { get; }
-
-        private IDnsSrvSortResult DnsSortResult { get; }
-
-        private DnsSrvQueryResult QueryResult { get; set; }
-
-        private uint ServerRecoveryUnavailableTime { get; }
-
         private Semaphore SemaphoreKey;
 
         private ILogger Logger;
 
         private DnsSrvServiceDescription LastService;
+
+        private bool disposed = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsServiceTargetSelectorReal"/> class.
@@ -43,27 +37,15 @@ namespace DnsSrvTool
             Logger = logger;
         }
 
+        private IDnsSrvQuerier DnsQuerier { get; }
+
+        private IDnsSrvSortResult DnsSortResult { get; }
+
+        private DnsSrvQueryResult QueryResult { get; set; }
+
+        private uint ServerRecoveryUnavailableTime { get; }
+
         private bool ShouldRetrieveResult => QueryResult == null || !QueryResult.IsAvailable;
-
-        private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
-        {
-            if (ShouldRetrieveResult)
-            {
-                Logger?.LogTrace($"Call the Dns Srv server");
-                QueryResult = await DnsQuerier.QueryServiceAsync(service);
-                DnsSortResult.Sort(QueryResult);
-                LastService = service;
-            }
-        }
-
-        internal void CheckService(DnsSrvServiceDescription service)
-        {
-            if (service == null)
-            {
-                Logger?.LogDebug($"DnsSrvServiceDescription service null found");
-                throw new ArgumentNullException("service cannot be null");
-            }
-        }
 
         /// <summary>
         /// Retrive the chosen DNS response endPoint.
@@ -97,6 +79,7 @@ namespace DnsSrvTool
             {
                 SemaphoreKey.Release();
             }
+
             return null;
         }
 
@@ -170,6 +153,52 @@ namespace DnsSrvTool
             finally
             {
                 SemaphoreKey.Release();
+            }
+        }
+
+        /// <summary>
+        /// Dispose the DnsServiceTargetSelectorReal.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        internal void CheckService(DnsSrvServiceDescription service)
+        {
+            if (service == null)
+            {
+                Logger?.LogDebug($"DnsSrvServiceDescription service null found");
+                throw new ArgumentNullException(nameof(service));
+            }
+        }
+
+        /// <summary>
+        /// Dispose the DnsServiceTargetSelectorReal.
+        /// </summary>
+        /// <param name="disposing">Dispose the sub objects.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    SemaphoreKey.Dispose();
+                }
+
+                disposed = true;
+            }
+        }
+
+        private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
+        {
+            if (ShouldRetrieveResult)
+            {
+                Logger?.LogTrace($"Call the Dns Srv server");
+                QueryResult = await DnsQuerier.QueryServiceAsync(service);
+                DnsSortResult.Sort(QueryResult);
+                LastService = service;
             }
         }
     }

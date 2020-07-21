@@ -3,12 +3,15 @@ namespace DnsSrvTool
     using System;
     using System.Net.Http;
 
+    /// <summary>
+    /// Quarantine policy.
+    /// </summary>
     public interface ITargetQuarantinePolicy
     {
         /// <summary>
         /// Gets the Quarantine Time.
         /// </summary>
-        /// <value>Quarantine Time</value>
+        /// <value>Quarantine Time.</value>
         TimeSpan QuarantineDuration { get; }
 
 

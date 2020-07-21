@@ -10,24 +10,6 @@ namespace DnsSrvTool
     public class DnsSrvServiceDescription
     {
         /// <summary>
-        /// Service name.
-        /// </summary>
-        /// <value>Service name.</value>
-        public string ServiceName { get; }
-
-        /// <summary>
-        /// Protocol used.
-        /// </summary>
-        /// <value>Protocol.</value>
-        public ProtocolType Protocol { get; }
-
-        /// <summary>
-        /// Domain name.
-        /// </summary>
-        /// <value>Domain name.</value>
-        public string Domain { get; }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvServiceDescription"/> class.
         /// </summary>
         /// <param name="serviceName">The dns service.</param>
@@ -39,6 +21,24 @@ namespace DnsSrvTool
             Protocol = protocol;
             Domain = domain;
         }
+
+        /// <summary>
+        /// Gets the service name.
+        /// </summary>
+        /// <value>The service name.</value>
+        public string ServiceName { get; }
+
+        /// <summary>
+        /// Gets the protocol used.
+        /// </summary>
+        /// <value>The protocol.</value>
+        public ProtocolType Protocol { get; }
+
+        /// <summary>
+        /// Gets the Domain name.
+        /// </summary>
+        /// <value>Domain name.</value>
+        public string Domain { get; }
 
         /// <summary>
         /// Are this object equal to an other DnsSrvServiceDescription.
@@ -54,8 +54,17 @@ namespace DnsSrvTool
             else
             {
                 DnsSrvServiceDescription service = (DnsSrvServiceDescription)obj;
-                return (ServiceName == service.ServiceName) && (Protocol == service.Protocol) && (Domain == service.Domain);
+                return GetHashCode() == service.GetHashCode();
             }
+        }
+
+        /// <summary>
+        /// ;
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return ServiceName.GetHashCode() +  Protocol.GetHashCode() + Domain.GetHashCode();
         }
     }
 }

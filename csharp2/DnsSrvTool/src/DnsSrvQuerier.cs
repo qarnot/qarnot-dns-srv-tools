@@ -12,22 +12,41 @@ namespace DnsSrvTool
 
     /// <summary>
     /// Dns srv querier
-    /// use an ILookupClient to do a srv call
+    /// use an ILookupClient to do a srv call.
     /// </summary>
-    public class DnsSrvQuerier: IDnsSrvQuerier
+    public class DnsSrvQuerier : IDnsSrvQuerier
     {
-        private ILookupClient LookupClient { get; }
         private ILogger Logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvQuerier"/> class.
         /// </summary>
         /// <param name="lookupClient">DnsClient object to do the DNS SRV calls.</param>
-        /// <param name="logger">Optional Logger</param>
+        /// <param name="logger">Optional Logger.</param>
         public DnsSrvQuerier(ILookupClient lookupClient, ILogger logger = null)
         {
             LookupClient = lookupClient;
             Logger = logger;
+        }
+
+        private ILookupClient LookupClient { get; }
+
+        /// <summary>
+        /// Ask a new srv call.
+        /// </summary>
+        /// <param name="service">Address to be call.</param>
+        /// <returns>Call Response with HostName, Port, Priority, Weight and Ttl.</returns>
+        public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
+        {
+            if (service == null)
+            {
+                throw new ArgumentNullException(nameof(service));
+            }
+
+            string queryString = CreateDnsQueryString(service);
+            var result = await LookupClient.QueryAsync(queryString, QueryType.SRV).ConfigureAwait(false);
+            var queryResult = ResolveServiceProcessResult(result);
+            return new DnsSrvQueryResult(queryResult);
         }
 
         /// <summary>
@@ -56,9 +75,7 @@ namespace DnsSrvTool
 
                 var dnsEntry = new DnsSrvResultEntry(hostName, entry.Port, entry.Priority, entry.Weight, timeToLive);
                 Logger?.LogTrace($"Dns Entry create : {dnsEntry.ToFullString()}");
-                hosts.Add(
-                    dnsEntry
-                );
+                hosts.Add(dnsEntry);
             }
 
             return hosts;
@@ -71,27 +88,9 @@ namespace DnsSrvTool
         /// <returns>Dns url create.</returns>
         protected string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
-            string dnsQueryString =  $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
+            string dnsQueryString = $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
             Logger?.LogDebug("Dns query string build : " + dnsQueryString);
             return dnsQueryString;
-        }
-
-        /// <summary>
-        /// Ask a new srv call.
-        /// </summary>
-        /// <param name="service">Address to be call.</param>
-        /// <returns>Call Response with HostName, Port, Priority, Weight and Ttl.</returns>
-        public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
-        {
-            if (service == null)
-            {
-                throw new ArgumentNullException();
-            }
-
-            string queryString = CreateDnsQueryString(service);
-            var result = await LookupClient.QueryAsync(queryString, QueryType.SRV).ConfigureAwait(false);
-            var queryResult = ResolveServiceProcessResult(result);
-            return new DnsSrvQueryResult(queryResult);
         }
     }
 }

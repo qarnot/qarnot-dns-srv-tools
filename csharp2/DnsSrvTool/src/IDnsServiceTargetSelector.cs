@@ -20,7 +20,7 @@ namespace DnsSrvTool
         /// <summary>
         /// Blacklist a response endpoint.
         /// </summary>
-        /// <param name="dnsHost">Host to be blacklist.</param>
+        /// <param name="host">Host to be blacklist.</param>
         /// <param name="duration">Blacklist duration.</param>
         void BlacklistHostFor(DnsEndPoint host, TimeSpan duration);
 
