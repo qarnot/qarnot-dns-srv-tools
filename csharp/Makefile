@@ -44,6 +44,14 @@ publish-binaries:
 publish-nuget:
 	nuget pack ${NAME}/${NAME}.nuspec -OutputDirectory ./publish/nuget
 	# dotnet pack
+	# nuget push
+
+nuget-local-export:
+	mkdir -p publish ~/.private_nuget
+	(cd ${NAME} && msbuild -t:pack)
+	# nuget pack ${NAME}/${NAME}.csproj -OutputDirectory ./publish/nuget
+	# nuget pack ${NAME}/${NAME}.nuspec -OutputDirectory ./publish/nuget
+	nuget add ${NAME}/bin/Debug/${NAME}*.nupkg -s ~/.private_nuget -IncludeReferencedProjects
 
 document:
 	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe metadata ${DOC_NAME}/docfx_project/docfx.json

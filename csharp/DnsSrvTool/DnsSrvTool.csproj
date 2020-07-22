@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>QarnotDnsHandler</RootNamespace>
-    <AssemblyName>QarnotDnsHandler</AssemblyName>
+    <RootNamespace>DnsSrvTool</RootNamespace>
+    <AssemblyName>DnsSrvTool</AssemblyName>
     <Version>1.0.0</Version>
+    <!-- <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties> -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <LangVersion>7.3</LangVersion>
     <OutputType>Library</OutputType>
@@ -18,7 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <DocumentationFile>bin\Debug\QarnotDnsHandler.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\DnsSrvTool.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -26,7 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <DocumentationFile>bin\Release\QarnotDnsHandler.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\DnsSrvTool.XML</DocumentationFile>
 
   </PropertyGroup>
   <!-- Common Deps -->
@@ -40,7 +43,7 @@
   <!-- NET45 Deps -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="1.1.2" />
-    <Reference Include="System.Net.Http" />
+    <!-- <Reference Include="System.Net.Http" /> -->
   </ItemGroup>
   <!-- NET45 Deps -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
@@ -48,6 +51,6 @@
   </ItemGroup>
   <!-- Config files -->
   <ItemGroup>
-    <None Include="QarnotDnsHandler.nuspec" />
+    <None Include="DnsSrvTool.nuspec" />
   </ItemGroup>
 </Project>
