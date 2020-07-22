@@ -10,6 +10,7 @@ namespace DnsSrvTool.Test
     using System.Threading.Tasks;
 
 #pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
+
     public class FakeDnsSrvQuerier : IDnsSrvQuerier
     {
         public List<DnsSrvResultEntry> DnsSrvResultEntryList { get; } = new List<DnsSrvResultEntry>()

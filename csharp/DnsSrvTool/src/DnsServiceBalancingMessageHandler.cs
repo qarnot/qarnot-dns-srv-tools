@@ -61,6 +61,7 @@ namespace DnsSrvTool
             }
 
             request.RequestUri = ReplaceHost(request.RequestUri, host);
+            Logger?.LogInformation($"Request uri : {request.RequestUri}");
             var response = await base.SendAsync(request, cancellationToken);
             if (response == null)
             {
@@ -70,7 +71,7 @@ namespace DnsSrvTool
             Logger?.LogInformation($"Response status code : {response.StatusCode}");
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
-                Logger?.LogInformation($"Host {host} is send in quarantine");
+                Logger?.LogWarning($"Host {host} is send in quarantine");
                 TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
                 request.RequestUri = originalUri;
                 return await SendAsync(request, cancellationToken);
@@ -81,7 +82,7 @@ namespace DnsSrvTool
 
         private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
         {
-            Logger?.LogInformation($"ReplaceHost: OldHost: {original.Host}:{original.Port} NewHost: {newHost.Host}:{newHost.Port}");
+            Logger?.LogTrace($"ReplaceHost: Replace the Hostname: {original.Host}:{original.Port} by the new HostName: {newHost.Host}:{newHost.Port}");
             var builder = new UriBuilder(original)
             {
                 Host = newHost.Host,

@@ -40,6 +40,7 @@ namespace DnsSrvTool
         {
             if (service == null)
             {
+                Logger?.LogError("DnsSrvServiceDescription cannot be null ");
                 throw new ArgumentNullException(nameof(service));
             }
 

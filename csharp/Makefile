@@ -6,7 +6,7 @@ CSPROJ=${NAME}/${NAME}.csproj
 # BUILDER=Dotnet
 BUILDER=Msbuild
 
-COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage" #--settings ${TEST_NAME}/coverlet.runsettings
+COVERAGE_MSBUILD_OPTION=--collect:"XPlat Code Coverage"
 COVERAGE_DOTNET_OPTION=/p:CollectCoverage=true /p:CoverletOutput="./coverage/" -nr:false -m:1 /p:Threshold=80 /p:Include="${TEST_NAME}/*"
 
 all: restore build cov_test
@@ -43,21 +43,17 @@ publish-binaries:
 
 publish-nuget:
 	nuget pack ${NAME}/${NAME}.nuspec -OutputDirectory ./publish/nuget
-	# dotnet pack
-	# nuget push
 
 nuget-local-export:
-	mkdir -p publish ~/.private_nuget
-	(cd ${NAME} && msbuild -t:pack)
-	# nuget pack ${NAME}/${NAME}.csproj -OutputDirectory ./publish/nuget
-	# nuget pack ${NAME}/${NAME}.nuspec -OutputDirectory ./publish/nuget
+	@cd ${NAME} && msbuild -t:pack
+	mkdir -p ~/.private_nuget
 	nuget add ${NAME}/bin/Debug/${NAME}*.nupkg -s ~/.private_nuget -IncludeReferencedProjects
 
 document:
 	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe metadata ${DOC_NAME}/docfx_project/docfx.json
 	mono ${DOC_NAME}/docfx/docfx.console.2.49.0/tools/docfx.exe build ${DOC_NAME}/docfx_project/docfx.json
 
-coverage: coverage-dotnet# run all tests and collect coverage
+coverage: coverage-dotnet
 
 coverage-dotnet:
 	@echo "\e[92mRunning Dotnet Code Coverage:\033[0m"
@@ -78,10 +74,6 @@ help:
 	@echo "\e[92mThis Makefile contains the following targets:\033[0m"
 	$(call get_targets_list)
 
-
-# Function part of the makefile:
-# keep tricky functions here and call them from
-# all the targets
 define get_targets_list
 	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 endef

@@ -13,16 +13,14 @@ namespace DnsSrvTool.Test
     using NLog;
     using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303, CA1304
 #pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
 
     public static class CreateLoggers
     {
         public static Microsoft.Extensions.Logging.ILogger CreateILoggerFromNLog(bool debug = false)
         {
-            // Example of NLog build
+            //  NLog build Example for microsoft ILogger find on :
             // https://stackoverflow.com/questions/56534730/nlog-works-in-asp-net-core-app-but-not-in-net-core-xunit-test-project
-            // NLog.Web.NLogBuilder.ConfigureNLog("nlog.config");
             var configuration = new NLog.Config.LoggingConfiguration();
             configuration.AddRuleForAllLevels(new NLog.Targets.ConsoleTarget());
             NLog.Web.NLogBuilder.ConfigureNLog(configuration);
@@ -33,7 +31,6 @@ namespace DnsSrvTool.Test
             // Create logger
             Microsoft.Extensions.Logging.ILogger logger = provider.CreateLogger(typeof(DnsSrvToolsIntergrationTest).FullName);
 
-            // ILogger logger = NLog.LogManager.GetCurrentClassLogger();
             if (debug)
             {
                 logger.LogDebug("This is a test of the log system : LogDebug.");

@@ -51,6 +51,8 @@ namespace DnsSrvTool
         /// Retrive the chosen DNS response endPoint.
         /// </summary>
         /// <param name="service">Dns service to call.</param>
+        /// <exception cref="ArgumentNullException">Thrown when service is null.</exception>
+        /// <exception cref="Exception">Thrown when service is different to the last service call.</exception>
         /// <returns>the DnsEndpoint response or null if no endPoint found.</returns>
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
@@ -58,7 +60,8 @@ namespace DnsSrvTool
             try
             {
                 CheckService(service);
-                if (!service.Equals(LastService) || ShouldRetrieveResult)
+
+                if (ShouldRetrieveResult)
                 {
                     await RetrieveQueryResultFromDnsAsync(service);
                 }
@@ -67,7 +70,7 @@ namespace DnsSrvTool
 
                 if (entryFound != null)
                 {
-                    Logger?.LogTrace($"entry found {entryFound}");
+                    Logger?.LogTrace($"Entry found {entryFound}");
                     return entryFound.DnsEndPoint;
                 }
 
@@ -92,7 +95,7 @@ namespace DnsSrvTool
         {
             if (dnsHost == null)
             {
-                Logger?.LogDebug($"Empty dnsHost given");
+                Logger?.LogError($"Empty dnsHost given to the BlacklistHostFor");
                 throw new ArgumentNullException(nameof(dnsHost));
             }
 
@@ -169,8 +172,14 @@ namespace DnsSrvTool
         {
             if (service == null)
             {
-                Logger?.LogDebug($"DnsSrvServiceDescription service null found");
+                Logger?.LogError($"DnsSrvServiceDescription service null found");
                 throw new ArgumentNullException(nameof(service));
+            }
+
+            if (LastService != null && !service.Equals(LastService))
+            {
+                Logger?.LogError($"Cannot change the resolved service");
+                throw Exception("Cannot change the resolved service");
             }
         }
 
@@ -193,13 +202,10 @@ namespace DnsSrvTool
 
         private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
         {
-            if (ShouldRetrieveResult)
-            {
-                Logger?.LogTrace($"Call the Dns Srv server");
-                QueryResult = await DnsQuerier.QueryServiceAsync(service);
-                DnsSortResult.Sort(QueryResult);
-                LastService = service;
-            }
+            Logger?.LogTrace($"Retrieve DnsService values {service}");
+            QueryResult = await DnsQuerier.QueryServiceAsync(service);
+            DnsSortResult.Sort(QueryResult);
+            LastService = service;
         }
     }
 }
