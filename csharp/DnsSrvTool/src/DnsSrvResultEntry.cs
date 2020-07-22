@@ -103,10 +103,10 @@ namespace DnsSrvTool
         /// <summary>
         /// Put the entity in quarantine.
         /// </summary>
-        /// <param name="quarnatineDuration">Quarnatine duration.</param>
-        public void PutInQuarantine(TimeSpan quarnatineDuration)
+        /// <param name="quarantineDuration">Quarantine duration.</param>
+        public void PutInQuarantine(TimeSpan quarantineDuration)
         {
-            QuarantineUntilTime = DateTime.UtcNow.Add(quarnatineDuration);
+            QuarantineUntilTime = DateTime.UtcNow.Add(quarantineDuration);
         }
 
         /// <summary>

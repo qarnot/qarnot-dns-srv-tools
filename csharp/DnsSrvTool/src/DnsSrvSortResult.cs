@@ -12,10 +12,10 @@ namespace DnsSrvTool
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvSortResult"/> class.
         /// </summary>
-        /// <param name="radomSeed">Random seed if determinist random is needed.</param>
-        public DnsSrvSortResult(int? radomSeed = null)
+        /// <param name="randomSeed">Random seed if determinist random is needed.</param>
+        public DnsSrvSortResult(int? randomSeed = null)
         {
-            Rand = radomSeed.HasValue ? new Random(radomSeed.Value) : new Random();
+            Rand = randomSeed.HasValue ? new Random(randomSeed.Value) : new Random();
         }
 
         private Random Rand { get; }

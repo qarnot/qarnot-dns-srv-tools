@@ -70,13 +70,13 @@ namespace DnsSrvTool
 
                 if (entryFound != null)
                 {
-                    Logger?.LogTrace($"Entry found {entryFound}");
+                    Logger?.LogTrace("Entry found {entryFound}", entryFound);
                     return entryFound.DnsEndPoint;
                 }
 
                 QueryResult?.ReduceLiveTime(ServerRecoveryUnavailableTime);
-                Logger?.LogTrace($"No entry found : 0 / {QueryResult?.DnsEntries?.Count ?? 0}");
-                Logger?.LogTrace($"The DNS server will be recall at: {QueryResult?.TtlEndTime}");
+                Logger?.LogTrace("No entry found : 0 / {entryCount}", QueryResult?.DnsEntries?.Count ?? 0);
+                Logger?.LogTrace("The DNS server will be recall at: {QueryResultTtlEndTime}", QueryResult?.TtlEndTime);
             }
             finally
             {
@@ -95,7 +95,7 @@ namespace DnsSrvTool
         {
             if (dnsHost == null)
             {
-                Logger?.LogError($"Empty dnsHost given to the BlacklistHostFor");
+                Logger?.LogError("Empty dnsHost given to the BlacklistHostFor");
                 throw new ArgumentNullException(nameof(dnsHost));
             }
 
@@ -106,7 +106,7 @@ namespace DnsSrvTool
                 {
                     if (entry.HostName == dnsHost.Host && entry.Port == dnsHost.Port)
                     {
-                        Logger?.LogTrace($"entry {entry} put in quarantine for : {duration}");
+                        Logger?.LogTrace("entry {entry} put in quarantine for : {duration}", entry, duration);
                         entry.PutInQuarantine(duration);
                     }
                 });
@@ -130,7 +130,7 @@ namespace DnsSrvTool
                 {
                     if (entry.HostName == host.Host && entry.Port == host.Port)
                     {
-                        Logger?.LogTrace($"entry {entry} quarantine reset");
+                        Logger?.LogTrace("entry {entry} quarantine reset", entry);
                         entry.ResetQuarantine();
                     }
                 });
@@ -149,7 +149,7 @@ namespace DnsSrvTool
             SemaphoreKey.WaitOne();
             try
             {
-                Logger?.LogTrace($"Reset of DnsServiceTargetSelectorReal");
+                Logger?.LogTrace("Reset of DnsServiceTargetSelectorReal");
                 QueryResult = null;
                 LastService = null;
             }
@@ -172,14 +172,14 @@ namespace DnsSrvTool
         {
             if (service == null)
             {
-                Logger?.LogError($"DnsSrvServiceDescription service null found");
+                Logger?.LogError("DnsSrvServiceDescription service null found");
                 throw new ArgumentNullException(nameof(service));
             }
 
             if (LastService != null && !service.Equals(LastService))
             {
-                Logger?.LogError($"Cannot change the resolved service");
-                throw Exception("Cannot change the resolved service");
+                Logger?.LogError("Cannot change the resolved service");
+                throw new Exception("Cannot change the resolved service");
             }
         }
 
@@ -202,7 +202,7 @@ namespace DnsSrvTool
 
         private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
         {
-            Logger?.LogTrace($"Retrieve DnsService values {service}");
+            Logger?.LogTrace("Retrieve DnsService values {service}", service);
             QueryResult = await DnsQuerier.QueryServiceAsync(service);
             DnsSortResult.Sort(QueryResult);
             LastService = service;

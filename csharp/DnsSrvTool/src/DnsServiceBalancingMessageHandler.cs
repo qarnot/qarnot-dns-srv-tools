@@ -56,22 +56,22 @@ namespace DnsSrvTool
             DnsEndPoint host = await TargetSelector.SelectHostAsync(ServiceDescription);
             if (host == null)
             {
-                Logger?.LogInformation($"No Dns Host Found");
+                Logger?.LogInformation("No Dns Host Found");
                 return await base.SendAsync(request, cancellationToken);
             }
 
             request.RequestUri = ReplaceHost(request.RequestUri, host);
-            Logger?.LogInformation($"Request uri : {request.RequestUri}");
+            Logger?.LogInformation("Request uri : {requestRequestUri}", request.RequestUri);
             var response = await base.SendAsync(request, cancellationToken);
             if (response == null)
             {
                 return response;
             }
 
-            Logger?.LogInformation($"Response status code : {response.StatusCode}");
+            Logger?.LogTrace("Response status code : {response.StatusCode}", response.StatusCode);
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
-                Logger?.LogWarning($"Host {host} is send in quarantine");
+                Logger?.LogWarning("Host {host} (from original host {original_host}) is send in quarantine", host, originalUri.Host);
                 TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
                 request.RequestUri = originalUri;
                 return await SendAsync(request, cancellationToken);
@@ -82,7 +82,7 @@ namespace DnsSrvTool
 
         private Uri ReplaceHost(Uri original, DnsEndPoint newHost)
         {
-            Logger?.LogTrace($"ReplaceHost: Replace the Hostname: {original.Host}:{original.Port} by the new HostName: {newHost.Host}:{newHost.Port}");
+            Logger?.LogTrace("ReplaceHost: Replace the Hostname: {originalHost}:{originalPort} by the new HostName: {newHostHost}:{newHostPort}", original.Host, original.Port, newHost.Host, newHost.Port);
             var builder = new UriBuilder(original)
             {
                 Host = newHost.Host,

@@ -40,7 +40,7 @@ namespace DnsSrvTool
         {
             if (service == null)
             {
-                Logger?.LogError("DnsSrvServiceDescription cannot be null ");
+                Logger?.LogError("DnsSrvServiceDescription cannot be null.");
                 throw new ArgumentNullException(nameof(service));
             }
 
@@ -61,7 +61,8 @@ namespace DnsSrvTool
             var hosts = new List<DnsSrvResultEntry>();
             if (result == null || result.HasError)
             {
-                Logger?.LogDebug("Dns Request fail");
+                var errorMessage = result == null ? "Dns request return a null response" : result.ErrorMessage;
+                Logger?.LogWarning("Dns Request fail: {errorMessage} returning empty hosts list", errorMessage);
                 return hosts;
             }
 
@@ -75,7 +76,7 @@ namespace DnsSrvTool
                     ?? entry.Target;
 
                 var dnsEntry = new DnsSrvResultEntry(hostName, entry.Port, entry.Priority, entry.Weight, timeToLive);
-                Logger?.LogTrace($"Dns Entry create : {dnsEntry.ToFullString()}");
+                Logger?.LogTrace("Dns Entry create : {dnsEntry}", dnsEntry.ToFullString());
                 hosts.Add(dnsEntry);
             }
 
@@ -90,7 +91,7 @@ namespace DnsSrvTool
         protected string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
             string dnsQueryString = $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
-            Logger?.LogDebug("Dns query string build : " + dnsQueryString);
+            Logger?.LogDebug("Dns query string build : {dnsQueryString}" + dnsQueryString);
             return dnsQueryString;
         }
     }
