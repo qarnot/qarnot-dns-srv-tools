@@ -85,7 +85,7 @@ namespace DnsSrvTool
             Logger?.LogTrace("ReplaceHost: Replace the Hostname: {originalHost}:{originalPort} by the new HostName: {newHostHost}:{newHostPort}", original.Host, original.Port, newHost.Host, newHost.Port);
             var builder = new UriBuilder(original)
             {
-                Host = newHost.Host,
+                Host = newHost.Host.Trim('.'),
                 Port = newHost.Port,
             };
 
