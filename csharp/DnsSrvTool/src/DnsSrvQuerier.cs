@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;
@@ -76,7 +77,7 @@ namespace DnsSrvTool
                     ?? entry.Target;
 
                 var dnsEntry = new DnsSrvResultEntry(hostName, entry.Port, entry.Priority, entry.Weight, timeToLive);
-                Logger?.LogTrace("Dns Entry create : {dnsEntry}", dnsEntry.ToFullString());
+                Logger?.LogDebug("Dns Entry create : {dnsEntry}", dnsEntry.ToString("f"));
                 hosts.Add(dnsEntry);
             }
 
@@ -90,6 +91,7 @@ namespace DnsSrvTool
         /// <returns>Dns url create.</returns>
         protected string CreateDnsQueryString(DnsSrvServiceDescription service)
         {
+            service = service ?? throw new ArgumentNullException(nameof(service), "The service should not be null.");
             string dnsQueryString = $"_{service.ServiceName}._{service.Protocol}.{service.Domain}.";
             Logger?.LogDebug("Dns query string build : {dnsQueryString}" + dnsQueryString);
             return dnsQueryString;

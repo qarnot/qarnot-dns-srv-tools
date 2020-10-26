@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;

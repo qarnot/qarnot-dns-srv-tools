@@ -27,14 +27,4 @@ namespace DnsSrvTool.Test
             return await Task.FromResult(new DnsSrvQueryResult(DnsSrvResultEntryList.Select(entity => new DnsSrvResultEntry(entity.HostName, entity.Port, entity.Priority, entity.Weight, entity.TimeToLiveInSec)).ToList()));
         }
     }
-
-    public class FakeDnsSrvQuerierEmpty : IDnsSrvQuerier
-    {
-        public List<DnsSrvResultEntry> DnsSrvResultEntryList { get; } = new List<DnsSrvResultEntry>();
-
-        public async Task<DnsSrvQueryResult> QueryServiceAsync(DnsSrvServiceDescription service)
-        {
-            return await Task.FromResult(new DnsSrvQueryResult(DnsSrvResultEntryList));
-        }
-    }
 }

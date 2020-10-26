@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;
@@ -64,6 +65,8 @@ namespace DnsSrvTool
         /// <returns>DnsSrvServiceDescription object.</returns>
         public DnsSrvServiceDescription FromUri(Uri uri)
         {
+            uri = uri ?? throw new ArgumentNullException(nameof(uri), "The uri should not be null.");
+
             var splitIndex = uri.DnsSafeHost.IndexOf(".");
             var serviceName = uri.DnsSafeHost.Substring(0, splitIndex);
             var domain = uri.DnsSafeHost.Substring(splitIndex + 1);

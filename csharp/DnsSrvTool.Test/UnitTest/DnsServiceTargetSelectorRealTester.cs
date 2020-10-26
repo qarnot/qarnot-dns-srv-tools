@@ -11,7 +11,7 @@ namespace DnsSrvTool.Test
     using DnsClient;
     using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
+#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307, CA2000, CA1054
 
     [TestFixture]
     public class DnsServiceTargetSelectorRealTester

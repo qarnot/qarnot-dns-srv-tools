@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307, CA1304
 namespace DnsSrvTool
 {
     using System;
@@ -112,10 +113,18 @@ namespace DnsSrvTool
         /// <summary>
         /// Print the full Entity information.
         /// </summary>
+        /// <param name="format">Add string inforation if a format is specified. format == "f" return a string with the full information.</param>
         /// <returns>String entity information.</returns>
-        public string ToFullString()
+        public string ToString(string format)
         {
-            return $"HostName: {HostName} Port: {Port} Priority: {Priority} Weight: {Weight} TimeToLiveInSec: {TimeToLiveInSec} CreationTime: {CreationTime} TtlEndTime: {TtlEndTime} QuarantineUntilTime: {QuarantineUntilTime}";
+            if (!string.IsNullOrEmpty(format) && format.ToLower() == "f")
+            {
+                return $"HostName: {HostName} Port: {Port} Priority: {Priority} Weight: {Weight} TimeToLiveInSec: {TimeToLiveInSec} CreationTime: {CreationTime} TtlEndTime: {TtlEndTime} QuarantineUntilTime: {QuarantineUntilTime}";
+            }
+            else
+            {
+                return this.ToString();
+            }
         }
 
         /// <summary>
@@ -124,7 +133,7 @@ namespace DnsSrvTool
         /// <returns>String entity information.</returns>
         public override string ToString()
         {
-            return "{Host:" + $"{HostName}" + " Port:" + $"{Port}" + "}";
+            return $"{{Host: {HostName} Port: {Port}}}";
         }
     }
 }

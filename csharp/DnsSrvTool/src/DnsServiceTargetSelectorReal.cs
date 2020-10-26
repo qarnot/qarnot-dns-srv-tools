@@ -1,3 +1,5 @@
+#pragma warning disable CA1303, CA1307
+
 namespace DnsSrvTool
 {
     using System;
@@ -13,7 +15,7 @@ namespace DnsSrvTool
     /// </summary>
     public class DnsServiceTargetSelectorReal : IDnsServiceTargetSelector, IDisposable
     {
-        private Semaphore SemaphoreKey;
+        private SemaphoreSlim SemaphoreKey;
 
         private ILogger Logger;
 
@@ -33,7 +35,7 @@ namespace DnsSrvTool
             DnsQuerier = dnsQuerier;
             DnsSortResult = dnsSortResult;
             ServerRecoveryUnavailableTime = serverRecoveryUnavailableTime;
-            SemaphoreKey = new Semaphore(1, 1);
+            SemaphoreKey = new SemaphoreSlim(1, 1);
             Logger = logger;
         }
 
@@ -56,7 +58,7 @@ namespace DnsSrvTool
         /// <returns>the DnsEndpoint response or null if no endPoint found.</returns>
         public async Task<DnsEndPoint> SelectHostAsync(DnsSrvServiceDescription service)
         {
-            SemaphoreKey.WaitOne();
+            await SemaphoreKey.WaitAsync();
             try
             {
                 CheckService(service);
@@ -70,13 +72,13 @@ namespace DnsSrvTool
 
                 if (entryFound != null)
                 {
-                    Logger?.LogTrace("Entry found {entryFound}", entryFound);
+                    Logger?.LogDebug("Entry found {entryFound}", entryFound);
                     return entryFound.DnsEndPoint;
                 }
 
-                QueryResult?.ReduceLiveTime(ServerRecoveryUnavailableTime);
-                Logger?.LogTrace("No entry found : 0 / {entryCount}", QueryResult?.DnsEntries?.Count ?? 0);
-                Logger?.LogTrace("The DNS server will be recall at: {QueryResultTtlEndTime}", QueryResult?.TtlEndTime);
+                QueryResult?.ReduceLifeTime(ServerRecoveryUnavailableTime);
+                Logger?.LogDebug("No entry found : 0 / {entryCount}", QueryResult?.DnsEntries?.Count ?? 0);
+                Logger?.LogDebug("The DNS server will be recall at: {QueryResultTtlEndTime}", QueryResult?.TtlEndTime);
             }
             finally
             {
@@ -99,14 +101,14 @@ namespace DnsSrvTool
                 throw new ArgumentNullException(nameof(dnsHost));
             }
 
-            SemaphoreKey.WaitOne();
+            SemaphoreKey.Wait();
             try
             {
                 QueryResult?.DnsEntries.ForEach(entry =>
                 {
                     if (entry.HostName == dnsHost.Host && entry.Port == dnsHost.Port)
                     {
-                        Logger?.LogTrace("entry {entry} put in quarantine for : {duration}", entry, duration);
+                        Logger?.LogDebug("entry {entry} put in Quarantine for : {duration}", entry, duration);
                         entry.PutInQuarantine(duration);
                     }
                 });
@@ -123,14 +125,14 @@ namespace DnsSrvTool
         /// <param name="host">Host to be reset.</param>
         public void ResetBlacklistForHost(DnsEndPoint host)
         {
-            SemaphoreKey.WaitOne();
+            SemaphoreKey.Wait();
             try
             {
                 QueryResult?.DnsEntries?.ForEach(entry =>
                 {
                     if (entry.HostName == host.Host && entry.Port == host.Port)
                     {
-                        Logger?.LogTrace("entry {entry} quarantine reset", entry);
+                        Logger?.LogDebug("entry {entry} Quarantine reset", entry);
                         entry.ResetQuarantine();
                     }
                 });
@@ -146,10 +148,10 @@ namespace DnsSrvTool
         /// </summary>
         public void Reset()
         {
-            SemaphoreKey.WaitOne();
+            SemaphoreKey.Wait();
             try
             {
-                Logger?.LogTrace("Reset of DnsServiceTargetSelectorReal");
+                Logger?.LogDebug("Reset of DnsServiceTargetSelectorReal");
                 QueryResult = null;
                 LastService = null;
             }
@@ -202,7 +204,7 @@ namespace DnsSrvTool
 
         private async Task RetrieveQueryResultFromDnsAsync(DnsSrvServiceDescription service)
         {
-            Logger?.LogTrace("Retrieve DnsService values {service}", service);
+            Logger?.LogDebug("Retrieve DnsService values {service}", service);
             QueryResult = await DnsQuerier.QueryServiceAsync(service);
             DnsSortResult.Sort(QueryResult);
             LastService = service;

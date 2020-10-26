@@ -13,7 +13,7 @@ namespace DnsSrvTool.Test
     using NLog;
     using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307
+#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307, CA2000
 
     [TestFixture]
     public class DnsSrvToolsIntergrationTest
@@ -30,7 +30,7 @@ namespace DnsSrvTool.Test
             IDnsSrvQuerier querier = new DnsSrvQuerier(dnsClient); // extract sort elements !
             DnsSrvServiceDescription service = extract.FromUri(uri);
             IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), retrieveTime);
-            ITargetQuarantinePolicy quarantinePolice = new TargetQuarantinePolicyServeurUnavailable();
+            ITargetQuarantinePolicy quarantinePolice = new TargetQuarantinePolicyServerUnavailable();
             using var delegateHandler = new DnsServiceBalancingMessageHandler(service, selector, quarantinePolice, null);
         }
 
@@ -60,7 +60,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), logger);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServerUnavailable(), logger);
             using HandlerWrapper handlerWrapper = WrapDnsHandler(dnsHandler, "responseSuccess");
 
             // create the request
@@ -83,7 +83,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServerUnavailable(), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -114,7 +114,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             IDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServerUnavailable(), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -144,7 +144,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10, logger), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), logger);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10, logger), new TargetQuarantinePolicyServerUnavailable(new TimeSpan(0, 0, 10)), logger);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;
@@ -183,7 +183,7 @@ namespace DnsSrvTool.Test
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(ProtocolType.Tcp);
 
             FakeDnsSrvQuerier querier = new FakeDnsSrvQuerier();
-            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServeurUnavailable(new TimeSpan(0, 0, 10)), null);
+            var dnsHandler = new DnsServiceBalancingMessageHandler(extract.FromUri(new Uri("https://api.qarnot.com")), new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), 10), new TargetQuarantinePolicyServerUnavailable(new TimeSpan(0, 0, 10)), null);
 
             // add the fake handle
             dnsHandler.InnerHandler = handler;

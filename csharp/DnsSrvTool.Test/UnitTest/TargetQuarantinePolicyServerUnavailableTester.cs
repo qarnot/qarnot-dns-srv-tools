@@ -11,28 +11,28 @@ namespace DnsSrvTool.Test
     using DnsClient;
     using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307,
+#pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307, CA2000, CA1054
 
     [TestFixture]
-    public class TargetQuarantinePolicyServeurUnavailableTester
+    public class TargetQuarantinePolicyServerUnavailableTester
     {
         [Test]
         [Theory]
         public void AllStatusCodeEnums(System.Net.HttpStatusCode statusCodeToTest)
         {
-            var targetQuarantine = new TargetQuarantinePolicyServeurUnavailable();
+            var targetQuarantine = new TargetQuarantinePolicyServerUnavailable();
             using HttpResponseMessage response = new HttpResponseMessage();
-            bool shouldQuarantaine = false;
+            bool shouldQuarantine = false;
             response.StatusCode = statusCodeToTest;
             if (statusCodeToTest == System.Net.HttpStatusCode.InternalServerError
                || statusCodeToTest == System.Net.HttpStatusCode.BadGateway
                || statusCodeToTest == System.Net.HttpStatusCode.GatewayTimeout
                || statusCodeToTest == System.Net.HttpStatusCode.ServiceUnavailable)
             {
-                shouldQuarantaine = true;
+                shouldQuarantine = true;
             }
 
-            Assert.AreEqual(shouldQuarantaine, targetQuarantine.ShouldQuarantine(response));
+            Assert.AreEqual(shouldQuarantine, targetQuarantine.ShouldQuarantine(response));
         }
     }
 }

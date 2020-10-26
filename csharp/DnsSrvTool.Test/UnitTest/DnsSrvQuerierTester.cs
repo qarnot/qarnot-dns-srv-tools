@@ -14,7 +14,7 @@ namespace DnsSrvTool.Test
     using Moq;
     using NUnit.Framework;
 
-#pragma warning disable CA1305, CA1303, CA1304
+#pragma warning disable CA1305, CA1303, CA1304, CA2000, CA1054
 
     [TestFixture]
     public class DnsSrvQuerierTester : DnsSrvQuerier

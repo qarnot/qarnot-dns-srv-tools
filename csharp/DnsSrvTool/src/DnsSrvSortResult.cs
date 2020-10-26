@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;
@@ -43,7 +44,7 @@ namespace DnsSrvTool
         /// </summary>
         /// <param name="source"> ServiceHostEntries to be sort. </param>
         /// <returns>ServiceHostEntries sorted.</returns>
-        protected IEnumerable<DnsSrvResultEntry> SortByPriority(IEnumerable<DnsSrvResultEntry> source)
+        protected static IEnumerable<DnsSrvResultEntry> SortByPriority(IEnumerable<DnsSrvResultEntry> source)
         {
             var result = source.ToArray();
             Array.Sort(result, new DnsSrvResultEntryPriorityComparer());

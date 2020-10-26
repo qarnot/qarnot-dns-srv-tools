@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;
@@ -54,7 +55,7 @@ namespace DnsSrvTool
         /// Lower the liveTime to maxTimeToLiveLeft seconds if the actual lifetime is upper to it.
         /// </summary>
         /// <param name="maxTimeToLiveLeft">The max life time.</param>
-        public void ReduceLiveTime(uint maxTimeToLiveLeft)
+        public void ReduceLifeTime(uint maxTimeToLiveLeft)
         {
             if (TtlEndTime > DateTime.UtcNow.AddSeconds(maxTimeToLiveLeft))
             {

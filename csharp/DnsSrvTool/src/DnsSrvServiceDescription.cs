@@ -1,3 +1,5 @@
+#pragma warning disable CA1303, CA1307
+
 namespace DnsSrvTool
 {
     using System;
@@ -64,7 +66,7 @@ namespace DnsSrvTool
         /// <returns>Return int hash code.</returns>
         public override int GetHashCode()
         {
-            return ServiceName.GetHashCode() + Protocol.GetHashCode() + Domain.GetHashCode();
+            return ServiceName.GetHashCode() ^ Protocol.GetHashCode() ^ Domain.GetHashCode();
         }
     }
 }

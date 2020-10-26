@@ -1,3 +1,4 @@
+#pragma warning disable CA1303, CA1307
 namespace DnsSrvTool
 {
     using System;
@@ -6,13 +7,13 @@ namespace DnsSrvTool
     /// <summary>
     /// Quarantine entities Manager.
     /// </summary>
-    public class TargetQuarantinePolicyServeurUnavailable : ITargetQuarantinePolicy
+    public class TargetQuarantinePolicyServerUnavailable : ITargetQuarantinePolicy
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TargetQuarantinePolicyServeurUnavailable"/> class.
+        /// Initializes a new instance of the <see cref="TargetQuarantinePolicyServerUnavailable"/> class.
         /// </summary>
         /// <param name="quarantineDuration">Quarantine time.</param>
-        public TargetQuarantinePolicyServeurUnavailable(TimeSpan? quarantineDuration = null)
+        public TargetQuarantinePolicyServerUnavailable(TimeSpan? quarantineDuration = null)
         {
             QuarantineDuration = quarantineDuration ?? new TimeSpan(0, 5, 0);
         }
