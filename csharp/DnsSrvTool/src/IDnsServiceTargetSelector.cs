@@ -22,17 +22,20 @@ namespace DnsSrvTool
         /// </summary>
         /// <param name="host">Host to be blacklist.</param>
         /// <param name="duration">Blacklist duration.</param>
-        void BlacklistHostFor(DnsEndPoint host, TimeSpan duration);
+        /// <returns>The Task return.</returns>
+        Task BlacklistHostForAsync(DnsEndPoint host, TimeSpan duration);
 
         /// <summary>
         /// Reset a blacklisted endpoint.
         /// </summary>
         /// <param name="host">Endpoint to be reset.</param>
-        void ResetBlacklistForHost(DnsEndPoint host);
+        /// <returns>The Task return.</returns>
+        Task ResetBlacklistForHostAsync(DnsEndPoint host);
 
         /// <summary>
         /// Reset all the object values.
         /// </summary>
-        void Reset();
+        /// <returns>The Task return.</returns>
+        Task ResetAsync();
     }
 }

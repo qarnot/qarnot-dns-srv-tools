@@ -73,7 +73,7 @@ namespace DnsSrvTool
             if (QuarantinePolicy.ShouldQuarantine(response))
             {
                 Logger?.LogWarning("Host {host} (from original host {original_host}) is send in quarantine", host, originalUri.Host);
-                TargetSelector.BlacklistHostFor(host, QuarantinePolicy.QuarantineDuration);
+                await TargetSelector.BlacklistHostForAsync(host, QuarantinePolicy.QuarantineDuration);
                 request.RequestUri = originalUri;
                 return await SendAsync(request, cancellationToken);
             }

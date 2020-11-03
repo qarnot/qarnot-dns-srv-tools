@@ -93,7 +93,8 @@ namespace DnsSrvTool
         /// </summary>
         /// <param name="dnsHost">Host to be blacklist.</param>
         /// <param name="duration">Blacklist duration.</param>
-        public void BlacklistHostFor(DnsEndPoint dnsHost, TimeSpan duration)
+        /// <returns>The Task return.</returns>
+        public async Task BlacklistHostForAsync(DnsEndPoint dnsHost, TimeSpan duration)
         {
             if (dnsHost == null)
             {
@@ -101,7 +102,7 @@ namespace DnsSrvTool
                 throw new ArgumentNullException(nameof(dnsHost));
             }
 
-            SemaphoreKey.Wait();
+            await SemaphoreKey.WaitAsync();
             try
             {
                 QueryResult?.DnsEntries.ForEach(entry =>
@@ -123,9 +124,10 @@ namespace DnsSrvTool
         /// Reset a blacklisted host.
         /// </summary>
         /// <param name="host">Host to be reset.</param>
-        public void ResetBlacklistForHost(DnsEndPoint host)
+        /// <returns>The Task return.</returns>
+        public async Task ResetBlacklistForHostAsync(DnsEndPoint host)
         {
-            SemaphoreKey.Wait();
+            await SemaphoreKey.WaitAsync();
             try
             {
                 QueryResult?.DnsEntries?.ForEach(entry =>
@@ -146,9 +148,10 @@ namespace DnsSrvTool
         /// <summary>
         /// Reset all the DnsSrvServiceDescription values.
         /// </summary>
-        public void Reset()
+        /// <returns>The Task return.</returns>
+        public async Task ResetAsync()
         {
-            SemaphoreKey.Wait();
+            await SemaphoreKey.WaitAsync();
             try
             {
                 Logger?.LogDebug("Reset of DnsServiceTargetSelectorReal");

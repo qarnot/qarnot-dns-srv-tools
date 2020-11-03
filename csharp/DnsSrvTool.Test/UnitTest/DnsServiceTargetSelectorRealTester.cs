@@ -39,7 +39,7 @@ namespace DnsSrvTool.Test
         {
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            var ex = Assert.Throws<ArgumentNullException>(() => selector.BlacklistHostFor(null, new TimeSpan(1, 1, 1)));
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => await selector.BlacklistHostForAsync(null, new TimeSpan(1, 1, 1)));
             Assert.IsNotNull(ex);
         }
 
@@ -48,7 +48,7 @@ namespace DnsSrvTool.Test
         {
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            selector.BlacklistHostFor(ret1, new TimeSpan(1, 1, 1));
+            await selector.BlacklistHostForAsync(ret1, new TimeSpan(1, 1, 1));
             var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.AreNotEqual(ret1, ret2);
         }
@@ -58,9 +58,9 @@ namespace DnsSrvTool.Test
         {
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            selector.BlacklistHostFor(ret1, new TimeSpan(1, 1, 1));
+            await selector.BlacklistHostForAsync(ret1, new TimeSpan(1, 1, 1));
             var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            selector.ResetBlacklistForHost(ret1);
+            await selector.ResetBlacklistForHostAsync(ret1);
             var ret3 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.AreNotEqual(ret1, ret2);
             Assert.AreEqual(ret1, ret3);
@@ -71,7 +71,7 @@ namespace DnsSrvTool.Test
         {
             var selector = new DnsServiceTargetSelectorReal(new FakeDnsSrvQuerier(), new DnsSrvSortResult(), 10, CreateLoggers.CreateILoggerFromNLog());
             var ret1 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
-            selector.ResetBlacklistForHost(ret1);
+            await selector.ResetBlacklistForHostAsync(ret1);
             var ret2 = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.AreEqual(ret1, ret2);
         }
@@ -83,14 +83,14 @@ namespace DnsSrvTool.Test
             var ret = save;
             do
             {
-                selector.BlacklistHostFor(ret, new TimeSpan(1, 1, 1));
+                await selector.BlacklistHostForAsync(ret, new TimeSpan(1, 1, 1));
                 ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             }
             while (ret != null);
 
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNull(ret);
-            selector.ResetBlacklistForHost(save);
+            await selector.ResetBlacklistForHostAsync(save);
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNotNull(ret);
         }
@@ -103,12 +103,12 @@ namespace DnsSrvTool.Test
             var ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             do
             {
-                selector.BlacklistHostFor(ret, new TimeSpan(1, 1, 1));
+                await selector.BlacklistHostForAsync(ret, new TimeSpan(1, 1, 1));
                 ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             }
             while (ret != null);
 
-            selector.Reset();
+            await selector.ResetAsync();
             ret = await selector.SelectHostAsync(new DnsSrvServiceDescription("service", ProtocolType.Tcp, "domain"));
             Assert.IsNotNull(ret);
         }
