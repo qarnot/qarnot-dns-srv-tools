@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>DnsSrvTool</RootNamespace>
+    <AssemblyName>DnsSrvTool</AssemblyName>
+    <Version>1.0.0</Version>
+    <!-- <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties> -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
+    <OutputType>Library</OutputType>
+    <Authors>Qarnot computing</Authors>
+    <Description>Handler to connect the Qarnot platform using the Dns Srv balance.</Description>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\Debug\DnsSrvTool.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <DocumentationFile>bin\Release\DnsSrvTool.XML</DocumentationFile>
+
+  </PropertyGroup>
+  <!-- Common Deps -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.0-preview.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Qarnot.CodeAnalysis" Version="0.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="DnsClient" Version="[1.3.2]" />
+  </ItemGroup>
+  <!-- NET45 Deps -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="1.1.2" />
+    <!-- <Reference Include="System.Net.Http" /> -->
+  </ItemGroup>
+  <!-- NET45 Deps -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.6" />
+  </ItemGroup>
+  <!-- Config files -->
+  <ItemGroup>
+    <None Include="DnsSrvTool.nuspec" />
+  </ItemGroup>
+</Project>
