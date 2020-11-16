@@ -5,7 +5,7 @@
     <Version>1.0.0</Version>
     <!-- <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties> -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-
+    <PackageId>QarnotDnsSrvTools</PackageId>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <LangVersion>7.3</LangVersion>
     <OutputType>Library</OutputType>
