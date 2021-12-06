@@ -4,13 +4,9 @@ namespace DnsSrvTool.Test
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Http;
-    using System.Net.Http.Headers;
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-    using DnsClient;
-    using Microsoft.Extensions.Logging;
-    using NLog;
     using NUnit.Framework;
 
 #pragma warning disable CA1305, CA1303, CA1304, CA1822, CA1307, CA2000
@@ -26,8 +22,7 @@ namespace DnsSrvTool.Test
             string uriString = "https://api.qarnot.com";
             Uri uri = new Uri(uriString);
             IDnsServiceExtractor extract = new DnsServiceExtractorFirstLabelConvention(protocol);
-            ILookupClient dnsClient = new LookupClient();
-            IDnsSrvQuerier querier = new DnsSrvQuerier(dnsClient); // extract sort elements !
+            IDnsSrvQuerier querier = new DnsSrvQuerier(); // extract sort elements !
             DnsSrvServiceDescription service = extract.FromUri(uri);
             IDnsServiceTargetSelector selector = new DnsServiceTargetSelectorReal(querier, new DnsSrvSortResult(), retrieveTime);
             ITargetQuarantinePolicy quarantinePolice = new TargetQuarantinePolicyServerUnavailable();

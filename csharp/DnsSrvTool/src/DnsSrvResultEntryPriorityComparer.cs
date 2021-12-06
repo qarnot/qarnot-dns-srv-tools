@@ -3,7 +3,6 @@ namespace DnsSrvTool
 {
     using System;
     using System.Collections.Generic;
-    using DnsClient;
 
     /// <summary>
     /// IComparer function to sort the DnsSrvResultEntry by priority.

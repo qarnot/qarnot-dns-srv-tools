@@ -4,8 +4,6 @@ namespace DnsSrvTool
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net.Sockets;
-    using System.Threading;
     using System.Threading.Tasks;
     using DnsClient;
     using DnsClient.Protocol;
@@ -18,6 +16,15 @@ namespace DnsSrvTool
     public class DnsSrvQuerier : IDnsSrvQuerier
     {
         private ILogger Logger;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DnsSrvQuerier"/> class with a default lookup client.
+        /// </summary>
+        /// <param name="logger">Optional Logger.</param>
+        public DnsSrvQuerier(ILogger logger = null)
+            : this(new LookupClient(), logger)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DnsSrvQuerier"/> class.

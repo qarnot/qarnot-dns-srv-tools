@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>DnsSrvTool</RootNamespace>
     <AssemblyName>DnsSrvTool</AssemblyName>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <!-- <NuspecProperties>$(NuspecProperties);version=$(Version)</NuspecProperties> -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>QarnotDnsSrvTools</PackageId>
@@ -42,7 +42,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="DnsClient" Version="[1.3.2]" />
+    <PackageReference Include="DnsClient" Version="[1.6.0]" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="1.1.2" />
   </ItemGroup>
   <!-- NET45 Deps -->
